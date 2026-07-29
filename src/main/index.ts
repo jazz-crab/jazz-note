@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from 'electron'
 import { join } from 'path'
 import { readdir, readFile, writeFile, unlink, mkdir, stat } from 'fs/promises'
 import { existsSync } from 'fs'
@@ -6,6 +6,7 @@ import { watch } from 'chokidar'
 
 let mainWindow: BrowserWindow | null = null
 let watcher: ReturnType<typeof watch> | null = null
+let closeTimeout: ReturnType<typeof setTimeout> | null = null
 
 const isDev = !!process.env.ELECTRON_RENDERER_URL
 
@@ -48,6 +49,8 @@ function createWindow() {
     }
   })
 
+  Menu.setApplicationMenu(null)
+
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
   })
@@ -55,6 +58,9 @@ function createWindow() {
   mainWindow.on('close', (e) => {
     e.preventDefault()
     mainWindow?.webContents.send('app:closing')
+    closeTimeout = setTimeout(() => {
+      mainWindow?.destroy()
+    }, 2000)
   })
 
   if (isDev) {
@@ -166,11 +172,12 @@ function registerIpc() {
   })
 
   ipcMain.handle('app:closed', () => {
+    if (closeTimeout) clearTimeout(closeTimeout)
     mainWindow?.destroy()
   })
 
   ipcMain.handle('shell:openPath', async (_event, filePath: string) => {
-    await electron.shell.openPath(filePath)
+    await shell.openPath(filePath)
   })
 }
 

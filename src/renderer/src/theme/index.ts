@@ -1,21 +1,28 @@
 import { useSettingsStore } from '../stores/settings'
-import { themes, getTheme } from './themes'
-import type { ThemeColors, ThemeId, ThemeDef } from './themes'
+import { palettes, getVariant } from './themes'
+import type { ThemeColors, PaletteId, ThemePalette, PaletteVariant } from './themes'
 
-export type { ThemeColors, ThemeId, ThemeDef }
-export { themes, getTheme }
+export type { ThemeColors, PaletteId, ThemePalette, PaletteVariant }
+export { palettes, getVariant }
 
 export function useColors(): ThemeColors {
-  const id = useSettingsStore((s) => s.theme)
-  return getTheme(id).colors
+  const id = useSettingsStore((s) => s.palette)
+  const isDark = useSettingsStore((s) => s.isDark)
+  return getVariant(id, isDark).colors
 }
 
 export function usePriorityColors(): Record<number, string> {
-  const id = useSettingsStore((s) => s.theme)
-  return getTheme(id).priorityColors
+  const id = useSettingsStore((s) => s.palette)
+  const isDark = useSettingsStore((s) => s.isDark)
+  return getVariant(id, isDark).priorityColors
 }
 
 export function useNoteColors(): Record<string, string> {
-  const id = useSettingsStore((s) => s.theme)
-  return getTheme(id).noteColors
+  const id = useSettingsStore((s) => s.palette)
+  const isDark = useSettingsStore((s) => s.isDark)
+  return getVariant(id, isDark).noteColors
+}
+
+export function useIsDark(): boolean {
+  return useSettingsStore((s) => s.isDark)
 }
