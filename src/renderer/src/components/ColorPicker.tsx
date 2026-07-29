@@ -1,5 +1,5 @@
 import type React from 'react'
-import { colors, noteColors } from '../theme'
+import { useColors, useNoteColors } from '../theme'
 
 interface Props {
   value: string
@@ -7,22 +7,25 @@ interface Props {
 }
 
 export default function ColorPicker({ value, onChange }: Props) {
+  const colors = useColors()
+  const noteColorMap = useNoteColors()
+
   return (
-    <div style={styles.container}>
+    <div style={containerStyle}>
       <button
         style={{
-          ...styles.dot,
+          ...dotStyle,
           background: 'transparent',
           border: `2px solid ${!value ? colors.blue : colors.border}`,
         }}
         onClick={() => onChange('')}
         title="Нет цвета"
       />
-      {Object.entries(noteColors).map(([name, color]) => (
+      {Object.entries(noteColorMap).map(([name, color]) => (
         <button
           key={name}
           style={{
-            ...styles.dot,
+            ...dotStyle,
             background: color,
             border: `2px solid ${value === name ? colors.fg : 'transparent'}`,
           }}
@@ -34,16 +37,14 @@ export default function ColorPicker({ value, onChange }: Props) {
   )
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 4,
-  },
-  dot: {
-    width: 16,
-    height: 16,
-    borderRadius: '50%',
-    transition: 'border-color 0.1s',
-  },
+const containerStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+}
+const dotStyle: React.CSSProperties = {
+  width: 16,
+  height: 16,
+  borderRadius: '50%',
+  transition: 'border-color 0.1s',
 }

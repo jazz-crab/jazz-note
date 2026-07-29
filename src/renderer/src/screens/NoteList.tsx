@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNotesStore, type SortBy } from '../stores/notes'
+import { useColors } from '../theme'
 import Sidebar from '../components/Sidebar'
 import NoteCard from '../components/NoteCard'
-import { colors } from '../theme'
 import type React from 'react'
 
 interface Props {
@@ -10,8 +10,8 @@ interface Props {
 }
 
 export default function NoteList({ onSelectNote }: Props) {
+  const colors = useColors()
   const notes = useNotesStore((s) => s.notes)
-  const folders = useNotesStore((s) => s.folders)
   const loading = useNotesStore((s) => s.loading)
   const sidebarSelection = useNotesStore((s) => s.sidebarSelection)
   const searchQuery = useNotesStore((s) => s.searchQuery)
@@ -110,28 +110,28 @@ export default function NoteList({ onSelectNote }: Props) {
   ]
 
   return (
-    <div style={styles.layout}>
+    <div style={layoutStyle}>
       <Sidebar />
-      <div style={styles.main}>
-        <div style={styles.topBar}>
-          <div style={styles.searchWrap}>
+      <div style={mainStyle}>
+        <div style={topBarStyle}>
+          <div style={{ position: 'relative' as const }}>
             <input
-              style={styles.search}
+              style={searchStyle(colors)}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Поиск заметок..."
             />
             {searchQuery && (
-              <button style={styles.clearBtn} onClick={() => setSearchQuery('')}>×</button>
+              <button style={clearBtnStyle(colors)} onClick={() => setSearchQuery('')}>×</button>
             )}
           </div>
-          <div style={styles.sortRow}>
+          <div style={sortRowStyle}>
             {sortOptions.map((opt) => (
               <button
                 key={opt.value}
                 style={{
-                  ...styles.sortBtn,
-                  ...(sortBy === opt.value ? styles.sortBtnActive : {}),
+                  ...sortBtnStyle(colors),
+                  ...(sortBy === opt.value ? sortBtnActiveStyle(colors) : {}),
                 }}
                 onClick={() => setSortBy(opt.value)}
               >
@@ -141,10 +141,10 @@ export default function NoteList({ onSelectNote }: Props) {
           </div>
         </div>
 
-        <div style={styles.list}>
-          {loading && <div style={styles.loading}>Загрузка...</div>}
+        <div style={listStyle}>
+          {loading && <div style={loadingStyle(colors)}>Загрузка...</div>}
           {!loading && filtered.length === 0 && (
-            <div style={styles.empty}>
+            <div style={emptyStyle(colors)}>
               {searchQuery ? 'Ничего не найдено' : 'Нет заметок'}
             </div>
           )}
@@ -161,10 +161,10 @@ export default function NoteList({ onSelectNote }: Props) {
           ))}
         </div>
 
-        <div style={styles.bottomBar}>
-          <div style={styles.newNoteWrap}>
+        <div style={bottomBarStyle(colors)}>
+          <div style={{ display: 'flex', gap: 8 }}>
             <input
-              style={styles.newNoteInput}
+              style={newNoteInputStyle(colors)}
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="Новая заметка..."
@@ -172,7 +172,7 @@ export default function NoteList({ onSelectNote }: Props) {
                 if (e.key === 'Enter') handleCreate()
               }}
             />
-            <button style={styles.createBtn} onClick={handleCreate}>+</button>
+            <button style={createBtnStyle(colors)} onClick={handleCreate}>+</button>
           </div>
         </div>
       </div>
@@ -180,101 +180,91 @@ export default function NoteList({ onSelectNote }: Props) {
   )
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  layout: {
-    display: 'flex',
-    height: '100%',
-  },
-  main: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-  },
-  topBar: {
-    padding: '12px 20px 8px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-  },
-  searchWrap: {
-    position: 'relative' as const,
-  },
-  search: {
-    width: '100%',
-    padding: '8px 12px',
-    background: colors.bgAlt,
-    border: `1px solid ${colors.border}`,
-    borderRadius: 6,
-    color: colors.fg,
-    fontSize: 13,
-  },
-  clearBtn: {
-    position: 'absolute' as const,
-    right: 8,
-    top: '50%',
-    transform: 'translateY(-50%)',
-    color: colors.comment,
-    fontSize: 16,
-  },
-  sortRow: {
-    display: 'flex',
-    gap: 4,
-  },
-  sortBtn: {
-    padding: '4px 10px',
-    fontSize: 11,
-    color: colors.comment,
-    borderRadius: 4,
-    transition: 'background 0.1s',
-  },
-  sortBtnActive: {
-    background: colors.bgHighlight,
-    color: colors.blue,
-    fontWeight: 600,
-  },
-  list: {
-    flex: 1,
-    overflow: 'auto',
-    padding: '8px 20px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 6,
-  },
-  loading: {
-    color: colors.comment,
-    textAlign: 'center' as const,
-    padding: 40,
-  },
-  empty: {
-    color: colors.comment,
-    textAlign: 'center' as const,
-    padding: 60,
-    fontSize: 14,
-  },
-  bottomBar: {
-    padding: '8px 20px 12px',
-    borderTop: `1px solid ${colors.border}`,
-  },
-  newNoteWrap: {
-    display: 'flex',
-    gap: 8,
-  },
-  newNoteInput: {
-    flex: 1,
-    padding: '8px 12px',
-    background: colors.bgAlt,
-    border: `1px solid ${colors.border}`,
-    borderRadius: 6,
-    color: colors.fg,
-    fontSize: 13,
-  },
-  createBtn: {
-    padding: '8px 16px',
-    background: colors.blue,
-    color: colors.bg,
-    borderRadius: 6,
-    fontWeight: 700,
-    fontSize: 16,
-  },
+const layoutStyle: React.CSSProperties = {
+  display: 'flex',
+  height: '100%',
 }
+const mainStyle: React.CSSProperties = {
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+}
+const topBarStyle: React.CSSProperties = {
+  padding: '12px 20px 8px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+}
+const sortRowStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: 4,
+}
+const listStyle: React.CSSProperties = {
+  flex: 1,
+  overflow: 'auto',
+  padding: '8px 20px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 6,
+}
+const searchStyle = (c: any) => ({
+  width: '100%',
+  padding: '8px 12px',
+  background: c.bgAlt,
+  border: `1px solid ${c.border}`,
+  borderRadius: 6,
+  color: c.fg,
+  fontSize: 13,
+})
+const clearBtnStyle = (c: any) => ({
+  position: 'absolute' as const,
+  right: 8,
+  top: '50%',
+  transform: 'translateY(-50%)',
+  color: c.comment,
+  fontSize: 16,
+})
+const sortBtnStyle = (c: any) => ({
+  padding: '4px 10px',
+  fontSize: 11,
+  color: c.comment,
+  borderRadius: 4,
+})
+const sortBtnActiveStyle = (c: any) => ({
+  background: c.bgHighlight,
+  color: c.blue,
+  fontWeight: 600,
+})
+const loadingStyle = (c: any) => ({
+  color: c.comment,
+  textAlign: 'center' as const,
+  padding: 40,
+})
+const emptyStyle = (c: any) => ({
+  color: c.comment,
+  textAlign: 'center' as const,
+  padding: 60,
+  fontSize: 14,
+})
+const bottomBarStyle = (c: any) => ({
+  padding: '8px 20px 12px',
+  borderTop: `1px solid ${c.border}`,
+})
+const newNoteInputStyle = (c: any) => ({
+  flex: 1,
+  padding: '8px 12px',
+  background: c.bgAlt,
+  border: `1px solid ${c.border}`,
+  borderRadius: 6,
+  color: c.fg,
+  fontSize: 13,
+})
+const createBtnStyle = (c: any) => ({
+  padding: '8px 16px',
+  background: c.blue,
+  color: c.bg,
+  borderRadius: 6,
+  fontWeight: 700,
+  fontSize: 16,
+})

@@ -1,13 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNotesStore } from '../stores/notes'
+import { useColors } from '../theme'
+import { debounce } from '../utils/debounce'
 import NoteEditor from '../components/NoteEditor'
 import PriorityPicker from '../components/PriorityPicker'
 import DatePicker from '../components/DatePicker'
 import ColorPicker from '../components/ColorPicker'
 import FindInNote from '../components/FindInNote'
-import { colors } from '../theme'
-import { debounce } from '../utils/debounce'
-import type React from 'react'
 
 interface Props {
   relPath: string
@@ -15,6 +14,7 @@ interface Props {
 }
 
 export default function NoteEdit({ relPath, onBack }: Props) {
+  const colors = useColors()
   const currentNote = useNotesStore((s) => s.currentNote)
   const setCurrentNote = useNotesStore((s) => s.setCurrentNote)
   const updateCurrentNote = useNotesStore((s) => s.updateCurrentNote)
@@ -65,8 +65,8 @@ export default function NoteEdit({ relPath, onBack }: Props) {
 
   if (!currentNote) {
     return (
-      <div style={styles.loading}>
-        <div style={styles.spinner} />
+      <div style={loadingStyle}>
+        <div style={spinnerStyle} />
       </div>
     )
   }
@@ -88,10 +88,10 @@ export default function NoteEdit({ relPath, onBack }: Props) {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <button style={styles.backBtn} onClick={onBack}>←</button>
-        <div style={styles.meta}>
+    <div style={containerStyle}>
+      <div style={headerStyle(colors)}>
+        <button style={backBtnStyle(colors)} onClick={onBack}>←</button>
+        <div style={metaStyle}>
           <PriorityPicker
             value={currentNote.meta.priority || 0}
             onChange={(v) => handleMetaChange({ priority: v as any })}
@@ -105,22 +105,18 @@ export default function NoteEdit({ relPath, onBack }: Props) {
             onChange={(c) => handleMetaChange({ color: c || undefined })}
           />
         </div>
-        <div style={styles.status}>
-          {isDirty && <span style={styles.unsaved}>Не сохранено</span>}
-          {saved && !isDirty && <span style={styles.saved}>Сохранено</span>}
-          <button style={styles.findBtn} onClick={() => setFindOpen(!findOpen)} title="Поиск (Ctrl+F)">
+        <div style={statusStyle}>
+          {isDirty && <span style={unsavedStyle(colors)}>Не сохранено</span>}
+          {saved && !isDirty && <span style={savedStyle(colors)}>Сохранено</span>}
+          <button style={findBtnStyle} onClick={() => setFindOpen(!findOpen)} title="Поиск (Ctrl+F)">
             🔍
           </button>
         </div>
       </div>
 
-      <FindInNote
-        isOpen={findOpen}
-        onClose={() => setFindOpen(false)}
-        editor={null}
-      />
+      <FindInNote isOpen={findOpen} onClose={() => setFindOpen(false)} />
 
-      <div style={styles.editorWrap}>
+      <div style={editorWrapStyle}>
         <NoteEditor
           value={currentNote.body}
           onChange={handleChange}
@@ -131,69 +127,67 @@ export default function NoteEdit({ relPath, onBack }: Props) {
   )
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    padding: '8px 16px',
-    borderBottom: `1px solid ${colors.border}`,
-    background: colors.bgAlt,
-    flexShrink: 0,
-  },
-  backBtn: {
-    fontSize: 18,
-    color: colors.blue,
-    padding: '4px 8px',
-    borderRadius: 4,
-  },
-  meta: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  status: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    flexShrink: 0,
-  },
-  unsaved: {
-    fontSize: 11,
-    color: colors.orange,
-  },
-  saved: {
-    fontSize: 11,
-    color: colors.green,
-  },
-  findBtn: {
-    fontSize: 14,
-    padding: '4px 8px',
-    borderRadius: 4,
-  },
-  editorWrap: {
-    flex: 1,
-    overflow: 'hidden',
-    display: 'flex',
-  },
-  loading: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-  },
-  spinner: {
-    width: 24,
-    height: 24,
-    border: `2px solid ${colors.border}`,
-    borderTopColor: colors.blue,
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-  },
+const containerStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+}
+const headerStyle = (c: any) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: '8px 16px',
+  borderBottom: `1px solid ${c.border}`,
+  background: c.bgAlt,
+  flexShrink: 0,
+})
+const backBtnStyle = (c: any) => ({
+  fontSize: 18,
+  color: c.blue,
+  padding: '4px 8px',
+  borderRadius: 4,
+})
+const metaStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  flex: 1,
+}
+const statusStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  flexShrink: 0,
+}
+const unsavedStyle = (c: any) => ({
+  fontSize: 11,
+  color: c.orange,
+})
+const savedStyle = (c: any) => ({
+  fontSize: 11,
+  color: c.green,
+})
+const findBtnStyle: React.CSSProperties = {
+  fontSize: 14,
+  padding: '4px 8px',
+  borderRadius: 4,
+}
+const editorWrapStyle: React.CSSProperties = {
+  flex: 1,
+  overflow: 'hidden',
+  display: 'flex',
+}
+const loadingStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '100%',
+}
+const spinnerStyle: React.CSSProperties = {
+  width: 24,
+  height: 24,
+  border: '2px solid var(--border)',
+  borderTopColor: 'var(--blue)',
+  borderRadius: '50%',
+  animation: 'spin 0.8s linear infinite',
 }

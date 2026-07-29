@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { colors } from '../theme'
+import { useColors } from '../theme'
 import type React from 'react'
 
 interface Props {
   isOpen: boolean
   onClose: () => void
-  editor: any
 }
 
 export default function FindInNote({ isOpen, onClose }: Props) {
+  const colors = useColors()
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -23,10 +23,10 @@ export default function FindInNote({ isOpen, onClose }: Props) {
   if (!isOpen) return null
 
   return (
-    <div style={styles.bar}>
+    <div style={barStyle(colors)}>
       <input
         ref={inputRef}
-        style={styles.input}
+        style={inputStyle(colors)}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Поиск в заметке..."
@@ -34,32 +34,30 @@ export default function FindInNote({ isOpen, onClose }: Props) {
           if (e.key === 'Escape') onClose()
         }}
       />
-      <button style={styles.close} onClick={onClose}>×</button>
+      <button style={closeStyle(colors)} onClick={onClose}>×</button>
     </div>
   )
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  bar: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '6px 16px',
-    background: colors.bgAlt,
-    borderBottom: `1px solid ${colors.border}`,
-  },
-  input: {
-    flex: 1,
-    padding: '4px 8px',
-    background: colors.bg,
-    border: `1px solid ${colors.border}`,
-    borderRadius: 4,
-    color: colors.fg,
-    fontSize: 13,
-  },
-  close: {
-    color: colors.comment,
-    fontSize: 18,
-    padding: '0 4px',
-  },
-}
+const barStyle = (c: any) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  padding: '6px 16px',
+  background: c.bgAlt,
+  borderBottom: `1px solid ${c.border}`,
+})
+const inputStyle = (c: any) => ({
+  flex: 1,
+  padding: '4px 8px',
+  background: c.bg,
+  border: `1px solid ${c.border}`,
+  borderRadius: 4,
+  color: c.fg,
+  fontSize: 13,
+})
+const closeStyle = (c: any) => ({
+  color: c.comment,
+  fontSize: 18,
+  padding: '0 4px',
+})

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { colors } from '../theme'
+import { useColors } from '../theme'
 import type React from 'react'
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
 }
 
 export default function DatePicker({ date, onDateChange }: Props) {
+  const colors = useColors()
   const [show, setShow] = useState(false)
 
   const formatted = date
@@ -15,15 +16,15 @@ export default function DatePicker({ date, onDateChange }: Props) {
     : null
 
   return (
-    <div style={styles.container}>
-      <button style={styles.btn} onClick={() => setShow(!show)}>
+    <div style={containerStyle}>
+      <button style={btnStyle(colors)} onClick={() => setShow(!show)}>
         {formatted || 'Дата'}
       </button>
       {date && (
-        <button style={styles.clear} onClick={() => onDateChange('')}>×</button>
+        <button style={clearStyle(colors)} onClick={() => onDateChange('')}>×</button>
       )}
       {show && (
-        <div style={styles.popup}>
+        <div style={popupStyle(colors)}>
           <input
             type="date"
             value={date ? date.slice(0, 10) : ''}
@@ -31,7 +32,7 @@ export default function DatePicker({ date, onDateChange }: Props) {
               onDateChange(e.target.value)
               setShow(false)
             }}
-            style={styles.dateInput}
+            style={dateInputStyle(colors)}
             autoFocus
           />
         </div>
@@ -40,44 +41,42 @@ export default function DatePicker({ date, onDateChange }: Props) {
   )
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    position: 'relative' as const,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 4,
-  },
-  btn: {
-    padding: '4px 10px',
-    background: colors.bgAlt,
-    border: `1px solid ${colors.border}`,
-    borderRadius: 4,
-    color: colors.fg,
-    fontSize: 12,
-  },
-  clear: {
-    color: colors.comment,
-    fontSize: 14,
-    padding: '0 2px',
-  },
-  popup: {
-    position: 'absolute' as const,
-    top: '100%',
-    left: 0,
-    marginTop: 4,
-    background: colors.bgPopup,
-    border: `1px solid ${colors.border}`,
-    borderRadius: 6,
-    padding: 8,
-    zIndex: 100,
-  },
-  dateInput: {
-    colorScheme: 'dark' as any,
-    color: colors.fg,
-    background: colors.bg,
-    border: `1px solid ${colors.border}`,
-    borderRadius: 4,
-    padding: 4,
-    fontFamily: 'inherit',
-  },
+const containerStyle: React.CSSProperties = {
+  position: 'relative',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
 }
+const btnStyle = (c: any) => ({
+  padding: '4px 10px',
+  background: c.bgAlt,
+  border: `1px solid ${c.border}`,
+  borderRadius: 4,
+  color: c.fg,
+  fontSize: 12,
+})
+const clearStyle = (c: any) => ({
+  color: c.comment,
+  fontSize: 14,
+  padding: '0 2px',
+})
+const popupStyle = (c: any) => ({
+  position: 'absolute' as const,
+  top: '100%',
+  left: 0,
+  marginTop: 4,
+  background: c.bgPopup,
+  border: `1px solid ${c.border}`,
+  borderRadius: 6,
+  padding: 8,
+  zIndex: 100,
+})
+const dateInputStyle = (_c: any) => ({
+  colorScheme: 'dark' as any,
+  color: 'var(--fg)',
+  background: 'var(--bg)',
+  border: '1px solid var(--border)',
+  borderRadius: 4,
+  padding: 4,
+  fontFamily: 'inherit',
+})
