@@ -85,15 +85,12 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   setCurrentNote: async (relPath: string | null) => {
-    const { currentNote, saveCurrentNote } = get()
+    const { currentNote, saveCurrentNote, notesPath } = get()
     if (currentNote && get().dirtyNotes.has(currentNote.relPath)) {
       await saveCurrentNote()
     }
-    if (!relPath) {
-      set({ currentNote: null })
-      return
-    }
-    const raw = await window.jazz.readFile(relPath)
+    if (!relPath) return
+    const raw = await window.jazz.readFile(relPath, notesPath || undefined)
     const data = parseNote(raw)
     const note: Note = {
       relPath,

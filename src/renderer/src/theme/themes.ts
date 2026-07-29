@@ -294,3 +294,37 @@ export function getThemeCSSVars(colors: ThemeColors): Record<string, string> {
     '--teal': colors.teal,
   }
 }
+
+export function getAtomicEditorCSSVars(colors: ThemeColors): Record<string, string> {
+  return {
+    '--atomic-editor-fg': colors.fg,
+    '--atomic-editor-fg-muted': colors.comment,
+    '--atomic-editor-fg-faint': colors.fgGutter,
+    '--atomic-editor-bg': colors.bg,
+    '--atomic-editor-bg-panel': colors.bgAlt,
+    '--atomic-editor-bg-surface': colors.bgHighlight,
+    '--atomic-editor-border': colors.border,
+    '--atomic-editor-accent': colors.blue,
+    '--atomic-editor-accent-bright': colors.magenta,
+    '--atomic-editor-accent-soft': colors.blue0,
+    '--atomic-editor-link': colors.cyan,
+    '--atomic-editor-link-hover': colors.blue,
+    '--atomic-editor-code-bg': colors.bgAlt,
+    '--atomic-editor-selection-bg': colors.bgVisual,
+    '--atomic-editor-search-bg': colors.bgVisual,
+    '--atomic-editor-search-bg-active': colors.blue0,
+    '--atomic-editor-hl-keyword': colors.magenta,
+    '--atomic-editor-hl-string': colors.green,
+    '--atomic-editor-hl-number': colors.orange,
+    '--atomic-editor-hl-comment': colors.comment,
+    '--atomic-editor-hl-type': colors.yellow,
+    '--atomic-editor-hl-function': colors.blue,
+    '--atomic-editor-hl-property': colors.cyan,
+    '--atomic-editor-hl-regexp': colors.red,
+    '--atomic-editor-hl-escape': colors.cyan,
+    '--atomic-editor-hl-tag': colors.red,
+    '--atomic-editor-hl-variable': colors.fg,
+    '--atomic-editor-hl-operator': colors.cyan,
+    '--atomic-editor-hl-invalid': colors.red,
+  }
+}

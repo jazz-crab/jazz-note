@@ -36,7 +36,7 @@ export default function Sidebar() {
     <div style={container(colors)}>
       <div style={title(colors)}>JazzNote</div>
 
-      <div style={styles.section}>
+      <div style={section}>
         {filterItems.map((item) => (
           <div
             key={item.label}
@@ -53,7 +53,7 @@ export default function Sidebar() {
 
       <div style={divider(colors)} />
 
-      <div style={styles.section}>
+      <div style={section}>
         <div style={sectionHeader(colors)}>
           <span>Папки</span>
           <button style={addBtn(colors)} onClick={handleNewFolder}>+</button>
@@ -67,7 +67,7 @@ export default function Sidebar() {
             }}
             onClick={() => setSidebarSelection({ type: 'folder', path: folder })}
           >
-            📁 {folder}
+            {'\u2514'} {folder}
           </div>
         ))}
         {folders.length === 0 && (
@@ -76,21 +76,16 @@ export default function Sidebar() {
       </div>
 
       <div style={{ marginTop: 'auto', padding: '8px 16px' }}>
-        <button
-          style={settingsBtn(colors)}
-          onClick={openSettings}
-        >
-          ⚙ Настройки
+        <button style={settingsBtn(colors)} onClick={openSettings}>
+          Настройки
         </button>
       </div>
     </div>
   )
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  section: {
-    padding: '4px 0',
-  },
+const section: React.CSSProperties = {
+  padding: '4px 0',
 }
 
 const container = (c: any) => ({

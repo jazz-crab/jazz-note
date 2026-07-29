@@ -10,6 +10,8 @@ const api = {
     ipcRenderer.invoke('notes:readFile', relPath, dirPath),
   writeFile: (relPath: string, content: string, dirPath?: string): Promise<boolean> =>
     ipcRenderer.invoke('notes:writeFile', relPath, content, dirPath),
+  writeFileSync: (relPath: string, content: string, dirPath?: string): boolean =>
+    ipcRenderer.sendSync('notes:writeFileSync', relPath, content, dirPath),
   deleteFile: (relPath: string, dirPath?: string): Promise<boolean> =>
     ipcRenderer.invoke('notes:deleteFile', relPath, dirPath),
   createFile: (relPath: string, content: string, dirPath?: string): Promise<boolean> =>
@@ -28,11 +30,8 @@ const api = {
     ipcRenderer.on('notes:changed', handler)
     return () => ipcRenderer.removeListener('notes:changed', handler)
   },
-  onAppClosing: (cb: () => Promise<void>) => {
-    const handler = async () => {
-      await cb()
-      ipcRenderer.invoke('app:closed')
-    }
+  onAppClosing: (cb: () => void) => {
+    const handler = () => cb()
     ipcRenderer.on('app:closing', handler)
     return () => ipcRenderer.removeListener('app:closing', handler)
   }

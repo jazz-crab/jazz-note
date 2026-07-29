@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useSettingsStore } from '../stores/settings'
 import { palettes } from '../theme/themes'
 import { useColors, useIsDark } from '../theme'
@@ -13,6 +14,18 @@ export default function SettingsDialog() {
   const toggleDark = useSettingsStore((s) => s.toggleDark)
   const setLang = useSettingsStore((s) => s.setLang)
 
+  useEffect(() => {
+    if (!showSettings) return
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        closeSettings()
+      }
+    }
+    window.addEventListener('keydown', handleKey, true)
+    return () => window.removeEventListener('keydown', handleKey, true)
+  }, [showSettings])
+
   if (!showSettings) return null
 
   return (
@@ -20,12 +33,21 @@ export default function SettingsDialog() {
       <div style={dialogStyle(colors)} onClick={(e) => e.stopPropagation()}>
         <div style={headerStyle}>
           <span style={titleStyle(colors)}>Настройки</span>
-          <button style={closeBtnStyle(colors)} onClick={closeSettings}>×</button>
+          <button style={closeBtnStyle(colors)} onClick={closeSettings}>
+            {'\u2715'}
+          </button>
         </div>
 
         <div style={bodyStyle}>
+          <div style={toggleGroupStyle}>
+            <span style={toggleLabelStyle(isDark ? 'dark' : 'light')}>Тёмная тема</span>
+            <button style={switchTrackStyle(isDark)} onClick={toggleDark}>
+              <span style={switchThumbStyle(isDark)} />
+            </button>
+          </div>
+
           <div style={groupStyle}>
-            <label style={labelStyle(colors)}>Тема</label>
+            <label style={labelStyle(colors)}>Цветовая схема</label>
             <div style={themeListStyle}>
               {palettes.map((p) => (
                 <button
@@ -49,22 +71,11 @@ export default function SettingsDialog() {
                   </div>
                   <span style={themeLabelStyle(colors)}>{p.label}</span>
                   {palette === p.id && (
-                    <span style={currentBadgeStyle(colors)}>✓</span>
+                    <span style={currentBadgeStyle(colors)}>{'\u2713'}</span>
                   )}
                 </button>
               ))}
             </div>
-          </div>
-
-          <div style={groupStyle}>
-            <label style={labelStyle(colors)}>Светлая / Тёмная</label>
-            <button
-              style={toggleBtnStyle(colors)}
-              onClick={toggleDark}
-            >
-              <span style={toggleIconStyle}>{isDark ? '🌙' : '☀️'}</span>
-              <span>{isDark ? 'Тёмная' : 'Светлая'}</span>
-            </button>
           </div>
 
           <div style={groupStyle}>
@@ -113,7 +124,7 @@ const titleStyle = (c: any) => ({
   color: c.fg,
 })
 const closeBtnStyle = (c: any) => ({
-  fontSize: 20,
+  fontSize: 18,
   color: c.comment,
   padding: '0 4px',
 })
@@ -123,6 +134,16 @@ const bodyStyle: React.CSSProperties = {
   flexDirection: 'column',
   gap: 20,
 }
+const toggleGroupStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+}
+const toggleLabelStyle = (_mode: string) => ({
+  fontSize: 14,
+  fontWeight: 500,
+  color: 'var(--fg)',
+})
 const groupStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -171,30 +192,37 @@ const themeLabelStyle = (c: any) => ({
   fontWeight: 500,
 })
 const currentBadgeStyle = (c: any) => ({
-  fontSize: 10,
+  fontSize: 11,
   color: c.blue,
   fontWeight: 700,
   position: 'absolute' as const,
   top: 4,
   right: 6,
 })
-const toggleBtnStyle = (c: any) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  padding: '10px 14px',
-  borderRadius: 8,
-  border: `1px solid ${c.border}`,
-  background: c.bg,
-  color: c.fg,
-  fontSize: 13,
+const switchTrackStyle = (isDark: boolean) => ({
+  width: 40,
+  height: 22,
+  borderRadius: 11,
+  border: 'none',
+  padding: 0,
+  background: isDark ? 'var(--blue)' : 'var(--border)',
+  position: 'relative' as const,
   cursor: 'pointer',
-  width: '100%',
-  textAlign: 'left' as const,
+  transition: 'background 0.2s',
+  flexShrink: 0,
 })
-const toggleIconStyle: React.CSSProperties = {
-  fontSize: 16,
-}
+const switchThumbStyle = (isDark: boolean) => ({
+  display: 'block',
+  width: 18,
+  height: 18,
+  borderRadius: '50%',
+  background: 'var(--bg)',
+  position: 'absolute' as const,
+  top: 2,
+  left: isDark ? 20 : 2,
+  transition: 'left 0.2s',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+})
 const selectStyle = (c: any) => ({
   padding: '8px 12px',
   background: c.bg,

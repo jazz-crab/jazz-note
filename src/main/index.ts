@@ -1,12 +1,11 @@
 import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from 'electron'
 import { join } from 'path'
 import { readdir, readFile, writeFile, unlink, mkdir, stat } from 'fs/promises'
-import { existsSync } from 'fs'
+import { existsSync, writeFileSync } from 'fs'
 import { watch } from 'chokidar'
 
 let mainWindow: BrowserWindow | null = null
 let watcher: ReturnType<typeof watch> | null = null
-let closeTimeout: ReturnType<typeof setTimeout> | null = null
 
 const isDev = !!process.env.ELECTRON_RENDERER_URL
 
@@ -55,12 +54,8 @@ function createWindow() {
     mainWindow?.show()
   })
 
-  mainWindow.on('close', (e) => {
-    e.preventDefault()
+  mainWindow.on('close', () => {
     mainWindow?.webContents.send('app:closing')
-    closeTimeout = setTimeout(() => {
-      mainWindow?.destroy()
-    }, 2000)
   })
 
   if (isDev) {
@@ -109,6 +104,17 @@ function registerIpc() {
     await ensureNotesDir(notesPath)
     await writeFile(fullPath, content, 'utf-8')
     return true
+  })
+
+  ipcMain.on('notes:writeFileSync', (event, relPath: string, content: string, dirPath?: string) => {
+    const notesPath = dirPath || getDefaultNotesPath()
+    const fullPath = join(notesPath, relPath)
+    if (!existsSync(notesPath)) {
+      event.returnValue = false
+      return
+    }
+    writeFileSync(fullPath, content, 'utf-8')
+    event.returnValue = true
   })
 
   ipcMain.handle('notes:deleteFile', async (_event, relPath: string, dirPath?: string) => {
@@ -169,11 +175,6 @@ function registerIpc() {
     })
     if (result.canceled) return null
     return result.filePaths[0]
-  })
-
-  ipcMain.handle('app:closed', () => {
-    if (closeTimeout) clearTimeout(closeTimeout)
-    mainWindow?.destroy()
   })
 
   ipcMain.handle('shell:openPath', async (_event, filePath: string) => {
