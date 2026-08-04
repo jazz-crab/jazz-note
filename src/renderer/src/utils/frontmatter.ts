@@ -1,4 +1,5 @@
 export interface NoteMeta {
+  id?: string
   title: string
   priority?: 0 | 1 | 2 | 3 | 4
   due?: string
@@ -29,7 +30,8 @@ export function parseNote(raw: string): NoteData {
         const key = line.slice(0, colon).trim()
         let val: any = line.slice(colon + 1).trim()
         if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1)
-        if (key === 'title') meta.title = val
+        if (key === 'id') meta.id = val
+        else if (key === 'title') meta.title = val
         else if (key === 'priority') meta.priority = Number(val) as any
         else if (key === 'due') meta.due = val
         else if (key === 'color') meta.color = val
@@ -54,6 +56,7 @@ export function serializeNote(meta: NoteMeta, content: string): string {
   const now = new Date().toISOString()
   const lines = ['---']
   lines.push(`title: "${meta.title}"`)
+  if (meta.id) lines.push(`id: "${meta.id}"`)
   if (meta.priority) lines.push(`priority: ${meta.priority}`)
   if (meta.due) lines.push(`due: "${meta.due}"`)
   if (meta.color) lines.push(`color: "${meta.color}"`)

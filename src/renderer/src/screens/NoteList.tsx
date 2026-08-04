@@ -1,12 +1,61 @@
 import { useEffect, useState } from 'react'
-import { useNotesStore, type SortBy } from '../stores/notes'
+import { useNotesStore, type SortBy, type Note } from '../stores/notes'
 import { useColors } from '../theme'
 import Sidebar from '../components/Sidebar'
 import NoteCard from '../components/NoteCard'
+import ConfirmDialog from '../components/ConfirmDialog'
 import type React from 'react'
 
 interface Props {
   onSelectNote: (relPath: string) => void
+}
+
+interface NoteItemProps {
+  note: Note
+  index: number
+  isNew: boolean
+  isDeleting: boolean
+  onOpen: () => void
+  onDelete: () => void
+  onDeleteConfirmed: () => void
+}
+
+function NoteItem({ note, index, isNew, isDeleting, onOpen, onDelete, onDeleteConfirmed }: NoteItemProps) {
+  const [entered, setEntered] = useState(false)
+
+  useEffect(() => {
+    if (isNew) {
+      setEntered(true)
+      return
+    }
+    const t = setTimeout(() => setEntered(true), index * 30)
+    return () => clearTimeout(t)
+  }, [isNew, index])
+
+  if (isDeleting) {
+    return (
+      <div
+        style={{ animation: 'cardOut 0.22s ease both' }}
+        onAnimationEnd={(e) => {
+          if (e.target === e.currentTarget) onDeleteConfirmed()
+        }}
+      >
+        <NoteCard note={note} isActive={false} onClick={onOpen} onDelete={onDelete} />
+      </div>
+    )
+  }
+
+  return (
+    <div
+      style={{
+        opacity: entered ? 1 : 0,
+        transform: entered ? 'none' : isNew ? 'translateX(24px)' : 'translateY(10px)',
+        transition: 'opacity 0.3s ease, transform 0.3s ease',
+      }}
+    >
+      <NoteCard note={note} isActive={false} onClick={onOpen} onDelete={onDelete} />
+    </div>
+  )
 }
 
 export default function NoteList({ onSelectNote }: Props) {
@@ -23,14 +72,26 @@ export default function NoteList({ onSelectNote }: Props) {
   const createNote = useNotesStore((s) => s.createNote)
 
   const [newTitle, setNewTitle] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<Set<string>>(new Set())
+  const [createdRelPath, setCreatedRelPath] = useState<string | null>(null)
+
+  const handleDeleted = (relPath: string) => {
+    deleteNote(relPath)
+    setDeleting((prev) => {
+      const next = new Set(prev)
+      next.delete(relPath)
+      return next
+    })
+  }
 
   useEffect(() => {
     loadNotes()
   }, [])
 
   useEffect(() => {
-    const unsub = window.jazz.onNotesChanged(() => {
-      loadNotes()
+    const unsub = window.jazz.onNotesChanged((relPath) => {
+      useNotesStore.getState().handleExternalChange(relPath)
     })
     return unsub
   }, [])
@@ -80,9 +141,7 @@ export default function NoteList({ onSelectNote }: Props) {
     return true
   })
 
-  if (sortBy === 'priority') {
-    filtered = [...filtered].sort((a, b) => (b.meta.priority || 0) - (a.meta.priority || 0))
-  } else if (sortBy === 'due') {
+  if (sortBy === 'due') {
     filtered = [...filtered].sort((a, b) => {
       if (!a.meta.due && !b.meta.due) return 0
       if (!a.meta.due) return 1
@@ -97,16 +156,16 @@ export default function NoteList({ onSelectNote }: Props) {
     })
   }
 
-  const handleCreate = () => {
-    const title = newTitle.trim() || 'Новая заметка'
-    createNote(title)
+  const handleCreate = async () => {
     setNewTitle('')
+    const relPath = await createNote(newTitle, setCreatedRelPath)
+    if (relPath) onSelectNote(relPath)
+    setTimeout(() => setCreatedRelPath(null), 1500)
   }
 
   const sortOptions: Array<{ value: SortBy; label: string }> = [
     { value: 'date', label: 'По дате' },
     { value: 'due', label: 'По сроку' },
-    { value: 'priority', label: 'По приоритету' },
   ]
 
   return (
@@ -148,15 +207,16 @@ export default function NoteList({ onSelectNote }: Props) {
               {searchQuery ? 'Ничего не найдено' : 'Нет заметок'}
             </div>
           )}
-          {filtered.map((note) => (
-            <NoteCard
+          {filtered.map((note, i) => (
+            <NoteItem
               key={note.relPath}
               note={note}
-              isActive={false}
-              onClick={() => onSelectNote(note.relPath)}
-              onDelete={() => {
-                if (confirm('Удалить заметку?')) deleteNote(note.relPath)
-              }}
+              index={i}
+              isNew={note.relPath === createdRelPath}
+              isDeleting={deleting.has(note.relPath)}
+              onOpen={() => onSelectNote(note.relPath)}
+              onDelete={() => setDeleteTarget(note.relPath)}
+              onDeleteConfirmed={() => handleDeleted(note.relPath)}
             />
           ))}
         </div>
@@ -176,6 +236,19 @@ export default function NoteList({ onSelectNote }: Props) {
           </div>
         </div>
       </div>
+
+      {deleteTarget && (
+        <ConfirmDialog
+          message="Удалить заметку?"
+          confirmLabel="Удалить"
+          cancelLabel="Отмена"
+          onConfirm={() => {
+            setDeleteTarget(null)
+            setDeleting((prev) => new Set(prev).add(deleteTarget))
+          }}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   )
 }

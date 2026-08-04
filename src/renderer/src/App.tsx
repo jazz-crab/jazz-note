@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSettingsStore } from './stores/settings'
 import { getVariant, getThemeCSSVars, getAtomicEditorCSSVars } from './theme/themes'
+import { getFontFamily } from './utils/fonts'
 import NoteList from './screens/NoteList'
 import NoteEdit from './screens/NoteEdit'
 import SettingsDialog from './components/SettingsDialog'
@@ -11,7 +12,7 @@ type Screen =
   | { type: 'list' }
   | { type: 'edit'; relPath: string }
 
-function applyTheme(palette: string, isDark: boolean) {
+function applyTheme(palette: string, isDark: boolean, font: string) {
   const variant = getVariant(palette as any, isDark)
   const vars = { ...getThemeCSSVars(variant.colors), ...getAtomicEditorCSSVars(variant.colors) }
   const root = document.documentElement
@@ -19,6 +20,7 @@ function applyTheme(palette: string, isDark: boolean) {
     root.style.setProperty(key, val)
   }
   root.style.colorScheme = isDark ? 'dark' : 'light'
+  root.style.setProperty('--app-font', `${getFontFamily(font as any)}, 'JetBrains Mono', 'Fira Code', monospace`)
 }
 
 export default function App() {
@@ -28,10 +30,11 @@ export default function App() {
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const palette = useSettingsStore((s) => s.palette)
   const isDark = useSettingsStore((s) => s.isDark)
+  const font = useSettingsStore((s) => s.font)
 
   useEffect(() => {
-    applyTheme(palette, isDark)
-  }, [palette, isDark])
+    applyTheme(palette, isDark, font)
+  }, [palette, isDark, font])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {

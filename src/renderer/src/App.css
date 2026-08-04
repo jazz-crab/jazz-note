@@ -1,3 +1,39 @@
+@font-face {
+  font-family: 'Monaspace Argon';
+  src: url('./assets/fonts/MonaspaceArgon.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Monaspace Neon';
+  src: url('./assets/fonts/MonaspaceNeon.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Monaspace Krypton';
+  src: url('./assets/fonts/MonaspaceKrypton.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Monaspace Xenon';
+  src: url('./assets/fonts/MonaspaceXenon.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Monaspace Radon';
+  src: url('./assets/fonts/MonaspaceRadon.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Symbols Nerd Font';
+  src: url('./assets/fonts/SymbolsNerdFont.ttf') format('truetype');
+  font-display: block;
+}
+
 *,
 *::before,
 *::after {
@@ -7,6 +43,8 @@
 }
 
 :root {
+  --app-font: 'Monaspace Neon', 'JetBrains Mono', 'Fira Code', monospace;
+
   --bg: #1a1b26;
   --bg-alt: #24283b;
   --bg-highlight: #292e42;
@@ -31,7 +69,7 @@
   --cyan: #7dcfff;
   --teal: #1abc9c;
 
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-family: var(--app-font);
   font-size: 14px;
   color: var(--fg);
   background: var(--bg);
@@ -80,4 +118,73 @@ a {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes noteIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes noteOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(24px); }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideOutLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes dialogIn {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes dialogOut {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.95) translateY(8px); }
+}
+
+@keyframes cardOut {
+  to { opacity: 0; transform: translateX(-24px); }
 }

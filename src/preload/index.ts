@@ -29,11 +29,6 @@ const api = {
     const handler = (_event: any, relPath: string) => cb(relPath)
     ipcRenderer.on('notes:changed', handler)
     return () => ipcRenderer.removeListener('notes:changed', handler)
-  },
-  onAppClosing: (cb: () => void) => {
-    const handler = () => cb()
-    ipcRenderer.on('app:closing', handler)
-    return () => ipcRenderer.removeListener('app:closing', handler)
   }
 }
 

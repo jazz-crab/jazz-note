@@ -11,14 +11,7 @@ export function useColors(): ThemeColors {
   return getVariant(id, isDark).colors
 }
 
-export function usePriorityColors(): Record<number, string> {
-  const id = useSettingsStore((s) => s.palette)
-  const isDark = useSettingsStore((s) => s.isDark)
-  return getVariant(id, isDark).priorityColors
-}
-
-export function useNoteColors(): Record<string, string> {
-  const id = useSettingsStore((s) => s.palette)
+export function useNoteColors(): Record<string, string> {  const id = useSettingsStore((s) => s.palette)
   const isDark = useSettingsStore((s) => s.isDark)
   return getVariant(id, isDark).noteColors
 }

@@ -12,7 +12,6 @@ export interface JazzAPI {
   selectDirectory: () => Promise<string | null>
   openPath: (filePath: string) => Promise<void>
   onNotesChanged: (cb: (relPath: string) => void) => () => void
-  onAppClosing: (cb: () => void) => () => void
 }
 
 declare global {

@@ -54,10 +54,6 @@ function createWindow() {
     mainWindow?.show()
   })
 
-  mainWindow.on('close', () => {
-    mainWindow?.webContents.send('app:closing')
-  })
-
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173')
   } else {
@@ -77,7 +73,7 @@ function registerIpc() {
     startWatching(notesPath)
 
     const entries = await readdir(notesPath, { withFileTypes: true })
-    const notes: Array<{ path: string; isDir: boolean }> = []
+    const notes: Array<{ path: string; isDir: boolean; mtimeMs?: number }> = []
     for (const entry of entries) {
       if (entry.isFile() && entry.name.endsWith('.md')) {
         const fullPath = join(notesPath, entry.name)
@@ -87,7 +83,7 @@ function registerIpc() {
         notes.push({ path: entry.name, isDir: true })
       }
     }
-    notes.sort((a, b) => (a as any).mtimeMs - (b as any).mtimeMs)
+    notes.sort((a, b) => (a.mtimeMs || 0) - (b.mtimeMs || 0))
     return notes
   })
 
@@ -182,15 +178,28 @@ function registerIpc() {
   })
 }
 
-app.whenReady().then(() => {
-  createWindow()
-  registerIpc()
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+if (!gotSingleInstanceLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+    }
   })
-})
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
-})
+  app.whenReady().then(() => {
+    createWindow()
+    registerIpc()
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
+  })
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit()
+  })
+}

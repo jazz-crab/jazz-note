@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useNotesStore, type SidebarSelection } from '../stores/notes'
 import { useSettingsStore } from '../stores/settings'
 import { useColors } from '../theme'
+import PromptDialog from './PromptDialog'
 
 const filterItems: Array<{ type: SidebarSelection; label: string }> = [
   { type: { type: 'all' }, label: 'Все заметки' },
@@ -18,6 +20,7 @@ export default function Sidebar() {
   const setSidebarSelection = useNotesStore((s) => s.setSidebarSelection)
   const createFolder = useNotesStore((s) => s.createFolder)
   const openSettings = useSettingsStore((s) => s.openSettings)
+  const [showNewFolder, setShowNewFolder] = useState(false)
 
   const isSelected = (sel: SidebarSelection): boolean => {
     if (sel.type !== sidebarSelection.type) return false
@@ -27,9 +30,9 @@ export default function Sidebar() {
     return true
   }
 
-  const handleNewFolder = () => {
-    const name = prompt('Название папки:')
-    if (name?.trim()) createFolder(name.trim())
+  const handleNewFolder = (name: string) => {
+    createFolder(name)
+    setShowNewFolder(false)
   }
 
   return (
@@ -56,7 +59,7 @@ export default function Sidebar() {
       <div style={section}>
         <div style={sectionHeader(colors)}>
           <span>Папки</span>
-          <button style={addBtn(colors)} onClick={handleNewFolder}>+</button>
+          <button style={addBtn(colors)} onClick={() => setShowNewFolder(true)}>+</button>
         </div>
         {folders.map((folder) => (
           <div
@@ -80,6 +83,16 @@ export default function Sidebar() {
           Настройки
         </button>
       </div>
+
+      {showNewFolder && (
+        <PromptDialog
+          message="Название папки:"
+          placeholder="Новая папка"
+          confirmLabel="Создать"
+          onConfirm={handleNewFolder}
+          onCancel={() => setShowNewFolder(false)}
+        />
+      )}
     </div>
   )
 }
@@ -88,7 +101,7 @@ const section: React.CSSProperties = {
   padding: '4px 0',
 }
 
-const container = (c: any) => ({
+const container = (c: any): React.CSSProperties => ({
   width: 240,
   height: '100%',
   background: c.bgSidebar,

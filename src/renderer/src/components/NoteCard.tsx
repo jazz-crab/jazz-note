@@ -1,5 +1,6 @@
 import type { Note } from '../stores/notes'
-import { useColors, usePriorityColors, useNoteColors } from '../theme'
+import { useColors, useNoteColors } from '../theme'
+import { mixHex } from '../utils/color'
 import type React from 'react'
 
 interface Props {
@@ -11,23 +12,22 @@ interface Props {
 
 export default function NoteCard({ note, isActive, onClick, onDelete }: Props) {
   const colors = useColors()
-  const priorityColors = usePriorityColors()
   const noteColorMap = useNoteColors()
-  const priority = note.meta.priority || 0
   const noteColor = note.meta.color ? noteColorMap[note.meta.color] : null
   const due = note.meta.due ? new Date(note.meta.due) : null
   const isOverdue = due && due < new Date()
   const preview = note.body.replace(/^#+\s*/gm, '').replace(/[*~`>-]/g, '').trim().slice(0, 140)
+  const cardBg = noteColor ? mixHex(noteColor, colors.bgAlt, 0.1) : undefined
 
   return (
     <div
       style={{
         ...card(colors),
+        ...(cardBg ? { background: cardBg } : {}),
         ...(isActive ? cardActive(colors) : {}),
       }}
       onClick={onClick}
     >
-      <div style={{ ...priorityStrip(priorityColors, priority) }} />
       <div style={styles.body}>
         <div style={styles.header}>
           {noteColor && (
@@ -70,11 +70,6 @@ const card = (c: any) => ({
   transition: 'border-color 0.1s',
 })
 const cardActive = (c: any) => ({ borderColor: c.blue })
-const priorityStrip = (pc: any, p: number) => ({
-  width: 4,
-  flexShrink: 0,
-  background: pc[p],
-})
 const colorDot = (c: string) => ({
   width: 8,
   height: 8,

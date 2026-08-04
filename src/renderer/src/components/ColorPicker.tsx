@@ -39,12 +39,14 @@ export default function ColorPicker({ value, onChange }: Props) {
 
 const containerStyle: React.CSSProperties = {
   display: 'flex',
+  flexDirection: 'column',
   alignItems: 'center',
-  gap: 4,
+  gap: 10,
+  padding: '6px 0',
 }
 const dotStyle: React.CSSProperties = {
-  width: 16,
-  height: 16,
+  width: 22,
+  height: 22,
   borderRadius: '50%',
-  transition: 'border-color 0.1s',
+  transition: 'border-color 0.1s, transform 0.1s',
 }

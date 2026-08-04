@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useSettingsStore } from '../stores/settings'
 import { palettes } from '../theme/themes'
+import { fontOptions } from '../utils/fonts'
 import { useColors, useIsDark } from '../theme'
 
 export default function SettingsDialog() {
@@ -10,9 +11,11 @@ export default function SettingsDialog() {
   const closeSettings = useSettingsStore((s) => s.closeSettings)
   const palette = useSettingsStore((s) => s.palette)
   const lang = useSettingsStore((s) => s.lang)
+  const font = useSettingsStore((s) => s.font)
   const setPalette = useSettingsStore((s) => s.setPalette)
   const toggleDark = useSettingsStore((s) => s.toggleDark)
   const setLang = useSettingsStore((s) => s.setLang)
+  const setFont = useSettingsStore((s) => s.setFont)
 
   useEffect(() => {
     if (!showSettings) return
@@ -88,6 +91,27 @@ export default function SettingsDialog() {
               <option value="ru">Русский</option>
             </select>
           </div>
+
+          <div style={groupStyle}>
+            <label style={labelStyle(colors)}>Шрифт</label>
+            <div style={fontListStyle}>
+              {fontOptions.map((f) => (
+                <button
+                  key={f.id}
+                  style={{
+                    ...fontBtnStyle(colors, f),
+                    ...(font === f.id ? fontBtnActiveStyle(colors) : {}),
+                  }}
+                  onClick={() => setFont(f.id)}
+                >
+                  <span style={{ fontFamily: f.family, color: f.color }}>{f.label}</span>
+                  {font === f.id && (
+                    <span style={fontCheckStyle(colors)}>{'\u2713'}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -160,6 +184,37 @@ const themeListStyle: React.CSSProperties = {
   gap: 8,
   flexWrap: 'wrap',
 }
+const fontListStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+}
+const fontBtnStyle = (c: any, f: { family: string; color: string }) => ({
+  position: 'relative' as const,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  padding: '10px 14px',
+  borderRadius: 8,
+  border: `1px solid ${c.border}`,
+  background: c.bg,
+  color: f.color,
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
+  transition: 'border-color 0.15s, background 0.15s',
+})
+const fontCheckStyle = (c: any) => ({
+  position: 'absolute' as const,
+  top: 8,
+  right: 10,
+  fontSize: 12,
+  color: c.blue,
+  fontWeight: 700,
+})
+const fontBtnActiveStyle = (c: any) => ({
+  borderColor: c.blue,
+})
 const themeBtnStyle = (c: any) => ({
   display: 'flex',
   flexDirection: 'column' as const,

@@ -2,6 +2,23 @@ import { create } from 'zustand'
 import type { NoteMeta, NoteData } from '../utils/frontmatter'
 import { parseNote, serializeNote } from '../utils/frontmatter'
 
+const ID_DIGITS = 5
+const ID_STORAGE_KEY = 'jazz-note:next-id'
+const ignoreWatcher = new Set<string>()
+
+const pad = (n: number) => String(n).padStart(ID_DIGITS, '0')
+
+function computeAndStoreNextId(notes: Note[]): string {
+  const max = notes.reduce((m, n) => {
+    const id = parseInt(n.meta.id || '', 10)
+    return Number.isNaN(id) ? m : Math.max(m, id)
+  }, 0)
+  const stored = parseInt(localStorage.getItem(ID_STORAGE_KEY) || '', 10)
+  const next = Math.max(max, Number.isNaN(stored) ? 0 : stored) + 1
+  localStorage.setItem(ID_STORAGE_KEY, String(next))
+  return pad(next)
+}
+
 export interface Note {
   relPath: string
   title: string
@@ -19,7 +36,7 @@ export type SidebarSelection =
   | { type: 'nodate' }
   | { type: 'folder'; path: string }
 
-export type SortBy = 'date' | 'due' | 'priority'
+export type SortBy = 'date' | 'due'
 
 interface NotesState {
   notes: Note[]
@@ -37,9 +54,10 @@ interface NotesState {
   setCurrentNote: (relPath: string | null) => Promise<void>
   updateCurrentNote: (body: string) => void
   updateNoteMeta: (meta: Partial<NoteMeta>) => void
-  saveCurrentNote: () => Promise<void>
-  createNote: (title: string) => Promise<void>
+  saveCurrentNote: () => Promise<boolean>
+  createNote: (title: string, onCreated?: (relPath: string) => void) => Promise<string>
   deleteNote: (relPath: string) => Promise<void>
+  handleExternalChange: (relPath: string) => void
   setSidebarSelection: (sel: SidebarSelection) => void
   setSearchQuery: (q: string) => void
   setSortBy: (s: SortBy) => void
@@ -79,6 +97,14 @@ export const useNotesStore = create<NotesState>((set, get) => ({
           content: raw,
           body: data.content,
         })
+      }
+    }
+    for (const note of notes) {
+      if (!note.meta.id) {
+        const id = computeAndStoreNextId(notes)
+        note.meta = { ...note.meta, id }
+        note.title = note.meta.title
+        await window.jazz.writeFile(note.relPath, serializeNote(note.meta, note.body), path)
       }
     }
     set({ notes, folders, loading: false })
@@ -129,31 +155,64 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
   saveCurrentNote: async () => {
     const { currentNote, notesPath } = get()
-    if (!currentNote) return
+    if (!currentNote) return true
     const meta = { ...currentNote.meta }
     const raw = serializeNote(meta, currentNote.body)
-    await window.jazz.writeFile(currentNote.relPath, raw, notesPath)
+    try {
+      await window.jazz.writeFile(currentNote.relPath, raw, notesPath)
+    } catch {
+      return false
+    }
     const dirty = new Set(get().dirtyNotes)
     dirty.delete(currentNote.relPath)
     set({
       currentNote: { ...currentNote, content: raw },
       dirtyNotes: dirty,
     })
+    return true
   },
 
-  createNote: async (title: string) => {
-    const { notesPath } = get()
+  createNote: async (title: string, onCreated?: (relPath: string) => void) => {
+    const { notesPath, notes } = get()
     const now = new Date().toISOString()
-    const filename = `${title.replace(/[^a-zA-Zа-яА-Я0-9\s-]/g, '').trim().replace(/\s+/g, '-')}.md`
+    const id = computeAndStoreNextId(notes)
+    const filename = `${id}.md`
+    const finalTitle = title.trim() || `#${id}`
     const meta: NoteMeta = {
-      title,
+      id,
+      title: finalTitle,
       created: now,
+      updated: now,
     }
-    const content = `# ${title}`
-    const raw = serializeNote(meta, content)
-    await window.jazz.createFile(filename, raw, notesPath)
-    await get().loadNotes()
-    await get().setCurrentNote(filename)
+    const raw = serializeNote(meta, '')
+    ignoreWatcher.add(filename)
+    setTimeout(() => ignoreWatcher.delete(filename), 3000)
+    try {
+      await window.jazz.createFile(filename, raw, notesPath)
+    } catch (e) {
+      ignoreWatcher.delete(filename)
+      throw e
+    }
+    onCreated?.(filename)
+    set({
+      notes: [
+        ...notes,
+        {
+          relPath: filename,
+          title: finalTitle,
+          meta,
+          content: raw,
+          body: '',
+        },
+      ],
+    })
+    return filename
+  },
+
+  handleExternalChange: (relPath: string) => {
+    const rel = relPath.replace(/^\/+/, '')
+    if (ignoreWatcher.has(rel)) return
+    void get().loadNotes()
   },
 
   deleteNote: async (relPath: string) => {
