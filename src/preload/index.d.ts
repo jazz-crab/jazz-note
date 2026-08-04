@@ -11,6 +11,8 @@ export interface JazzAPI {
   deleteDir: (relPath: string, dirPath?: string) => Promise<boolean>
   selectDirectory: () => Promise<string | null>
   openPath: (filePath: string) => Promise<void>
+  readHistory: () => Promise<Record<string, unknown>>
+  writeHistory: (data: unknown) => Promise<boolean>
   onNotesChanged: (cb: (relPath: string) => void) => () => void
 }
 

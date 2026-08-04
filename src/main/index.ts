@@ -165,6 +165,21 @@ function registerIpc() {
     return result
   })
 
+  ipcMain.handle('history:read', async () => {
+    const historyPath = join(app.getPath('userData'), 'jazz-note-history.json')
+    try {
+      return JSON.parse(await readFile(historyPath, 'utf-8'))
+    } catch {
+      return {}
+    }
+  })
+
+  ipcMain.handle('history:write', async (_event, data: unknown) => {
+    const historyPath = join(app.getPath('userData'), 'jazz-note-history.json')
+    await writeFile(historyPath, JSON.stringify(data), 'utf-8')
+    return true
+  })
+
   ipcMain.handle('dialog:selectDirectory', async () => {
     const result = await dialog.showOpenDialog(mainWindow!, {
       properties: ['openDirectory']

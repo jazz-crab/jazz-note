@@ -9,6 +9,7 @@ import DatePicker from '../components/DatePicker'
 import ColorPicker from '../components/ColorPicker'
 import SaveStatusCircle, { type SaveStatus } from '../components/SaveStatusCircle'
 import SidePanel from '../components/SidePanel'
+import UndoToast from '../components/UndoToast'
 
 interface Props {
   relPath: string
@@ -48,10 +49,19 @@ export default function NoteEdit({ relPath, onBack }: Props) {
     }
   }, [relPath, setCurrentNote])
 
+  const backFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (backFallbackRef.current) clearTimeout(backFallbackRef.current)
+    }
+  }, [])
+
   const handleBack = useCallback(() => {
     if (leaving) return
     setLeaving(true)
-  }, [leaving])
+    backFallbackRef.current = setTimeout(onBack, 260)
+  }, [leaving, onBack])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -153,6 +163,8 @@ export default function NoteEdit({ relPath, onBack }: Props) {
         />
         <SaveStatusCircle status={status} lastSavedAt={lastSavedAt} error={lastError} />
       </div>
+
+      <UndoToast />
 
       <div
         style={{

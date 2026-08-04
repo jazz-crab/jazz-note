@@ -6,6 +6,7 @@ import NoteList from './screens/NoteList'
 import NoteEdit from './screens/NoteEdit'
 import SettingsDialog from './components/SettingsDialog'
 import ConfirmDialog from './components/ConfirmDialog'
+import { historyStore } from './stores/history'
 import '@atomic-editor/editor/styles.css'
 
 type Screen =
@@ -35,6 +36,10 @@ export default function App() {
   useEffect(() => {
     applyTheme(palette, isDark, font)
   }, [palette, isDark, font])
+
+  useEffect(() => {
+    void historyStore.init()
+  }, [])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {

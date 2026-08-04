@@ -24,6 +24,10 @@ const api = {
     ipcRenderer.invoke('dialog:selectDirectory'),
   openPath: (filePath: string): Promise<void> =>
     ipcRenderer.invoke('shell:openPath', filePath),
+  readHistory: (): Promise<Record<string, unknown>> =>
+    ipcRenderer.invoke('history:read'),
+  writeHistory: (data: unknown): Promise<boolean> =>
+    ipcRenderer.invoke('history:write', data),
 
   onNotesChanged: (cb: (relPath: string) => void) => {
     const handler = (_event: any, relPath: string) => cb(relPath)
