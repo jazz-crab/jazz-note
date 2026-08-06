@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { NoteMeta, NoteData } from '../utils/frontmatter'
+import type { NoteMeta } from '../utils/frontmatter'
 import { parseNote, serializeNote } from '../utils/frontmatter'
 import { useSettingsStore } from './settings'
 import { debounce } from '../utils/debounce'

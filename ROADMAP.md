@@ -10,6 +10,9 @@ Legend: `[x] done · [ ] next · [~] deferred`
 - [x] **English UI (i18n)** — the i18n dictionary and `t()` helper are wired through the whole UI; language switch in Settings (Русский / English), persisted.
 - [x] **Custom vault path** — pick any folder as the notes vault via a system dialog (Settings → Notes folder) and persist the choice.
 - [x] **Folders** — rename and delete folders (deleting non-empty folders works), and create new notes inside the currently selected folder.
+- [x] **Nested folders** — folders can nest at any depth; a folder can be moved into another folder or to root via the right-click menu.
+- [x] **Note context menu** — right-click on a note: rename, change date, change color, delete.
+- [x] **Countdown to the next due note** — a live-updating bar at the top of the main screen; hideable via the × or a Settings toggle, the preference is remembered.
 
 ### Correctness & cleanup
 - [x] **Code highlighting languages** — Java, C/C++, PHP, SQL, XML CodeMirror language packages added; highlighting works.

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useColors } from '../theme'
 import { useSettingsStore } from '../stores/settings'
-import { t, weekdays, monthName, type Lang } from '../utils/i18n'
+import { t, weekdays, monthName } from '../utils/i18n'
 import type React from 'react'
 
 interface Props {
