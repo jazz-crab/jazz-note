@@ -13,6 +13,7 @@ Legend: `[x] done · [ ] next · [~] deferred`
 - [x] **Nested folders** — folders can nest at any depth; a folder can be moved into another folder or to root via the right-click menu.
 - [x] **Note context menu** — right-click on a note: rename, change date, change color, delete.
 - [x] **Countdown to the next due note** — a live-updating bar at the top of the main screen; hideable via the × or a Settings toggle, the preference is remembered.
+- [ ] **Vim-style hotkeys** — keyboard navigation without mouse: `j`/`k` to move between notes, `h`/`l` to collapse/expand folders, `gg`/`G` to jump to first/last note, `/` to focus search.
 
 ### Correctness & cleanup
 - [x] **Code highlighting languages** — Java, C/C++, PHP, SQL, XML CodeMirror language packages added; highlighting works.
