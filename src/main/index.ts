@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
 import { join } from 'path'
-import { readdir, readFile, writeFile, unlink, mkdir, rm } from 'fs/promises'
+import { readdir, readFile, writeFile, unlink, mkdir, rm, rename } from 'fs/promises'
 import { existsSync } from 'fs'
 import { watch } from 'chokidar'
 
@@ -108,6 +108,16 @@ function registerIpc() {
     const notesPath = dirPath || getDefaultNotesPath()
     const fullPath = join(notesPath, relPath)
     await rm(fullPath, { recursive: true, force: true })
+    return true
+  })
+
+  ipcMain.handle('notes:rename', async (_event, relPath: string, newRelPath: string, dirPath?: string) => {
+    const notesPath = dirPath || getDefaultNotesPath()
+    const fullPath = join(notesPath, relPath)
+    const newFullPath = join(notesPath, newRelPath)
+    await ensureNotesDir(notesPath)
+    await mkdir(join(newFullPath, '..'), { recursive: true })
+    await rename(fullPath, newFullPath)
     return true
   })
 

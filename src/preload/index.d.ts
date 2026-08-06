@@ -7,6 +7,7 @@ export interface JazzAPI {
   createFile: (relPath: string, content: string, dirPath?: string) => Promise<boolean>
   createDir: (relPath: string, dirPath?: string) => Promise<boolean>
   deleteDir: (relPath: string, dirPath?: string) => Promise<boolean>
+  rename: (relPath: string, newRelPath: string, dirPath?: string) => Promise<boolean>
   selectDirectory: () => Promise<string | null>
   readHistory: () => Promise<Record<string, unknown>>
   writeHistory: (data: unknown) => Promise<boolean>

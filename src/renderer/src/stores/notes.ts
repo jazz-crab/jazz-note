@@ -64,6 +64,8 @@ interface NotesState {
   setSearchQuery: (q: string) => void
   setSortBy: (s: SortBy) => void
   createFolder: (name: string) => Promise<void>
+  renameFolder: (folder: string, newName: string) => Promise<void>
+  deleteFolder: (folder: string) => Promise<void>
 }
 
 export const useNotesStore = create<NotesState>((set, get) => ({
@@ -177,10 +179,11 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   createNote: async (title: string, onCreated?: (relPath: string) => void) => {
-    const { notesPath, notes } = get()
+    const { notesPath, notes, sidebarSelection } = get()
     const now = new Date().toISOString()
     const id = computeAndStoreNextId(notes)
-    const filename = `${id}.md`
+    const folder = sidebarSelection.type === 'folder' ? sidebarSelection.path : ''
+    const filename = folder ? `${folder}/${id}.md` : `${id}.md`
     const finalTitle = title.trim() || `#${id}`
     const meta: NoteMeta = {
       id,
@@ -236,6 +239,28 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     const { notesPath } = get()
     await window.jazz.createDir(name, notesPath)
     await get().loadNotes()
+  },
+
+  renameFolder: async (folder: string, newName: string) => {
+    const name = newName.trim().replace(/[/\\]/g, '')
+    if (!name || name === folder) return
+    const { notesPath } = get()
+    await window.jazz.rename(folder, name, notesPath)
+    await get().loadNotes()
+    const sel = get().sidebarSelection
+    if (sel.type === 'folder' && sel.path === folder) {
+      set({ sidebarSelection: { type: 'folder', path: name } })
+    }
+  },
+
+  deleteFolder: async (folder: string) => {
+    const { notesPath } = get()
+    await window.jazz.deleteDir(folder, notesPath)
+    await get().loadNotes()
+    const sel = get().sidebarSelection
+    if (sel.type === 'folder' && sel.path === folder) {
+      set({ sidebarSelection: { type: 'all' } })
+    }
   },
 }))
 

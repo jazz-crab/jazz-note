@@ -9,7 +9,7 @@ Legend: `[x] done · [ ] next · [~] deferred`
 ### Usability
 - [x] **English UI (i18n)** — the i18n dictionary and `t()` helper are wired through the whole UI; language switch in Settings (Русский / English), persisted.
 - [x] **Custom vault path** — pick any folder as the notes vault via a system dialog (Settings → Notes folder) and persist the choice.
-- [ ] **Folders** — move / rename folders, and create new notes inside the currently selected folder. (Deleting non-empty folders is fixed.)
+- [x] **Folders** — rename and delete folders (deleting non-empty folders works), and create new notes inside the currently selected folder.
 
 ### Correctness & cleanup
 - [x] **Code highlighting languages** — Java, C/C++, PHP, SQL, XML CodeMirror language packages added; highlighting works.

@@ -16,6 +16,8 @@ const api = {
     ipcRenderer.invoke('notes:createDir', relPath, dirPath),
   deleteDir: (relPath: string, dirPath?: string): Promise<boolean> =>
     ipcRenderer.invoke('notes:deleteDir', relPath, dirPath),
+  rename: (relPath: string, newRelPath: string, dirPath?: string): Promise<boolean> =>
+    ipcRenderer.invoke('notes:rename', relPath, newRelPath, dirPath),
   selectDirectory: (): Promise<string | null> =>
     ipcRenderer.invoke('dialog:selectDirectory'),
   readHistory: (): Promise<Record<string, unknown>> =>

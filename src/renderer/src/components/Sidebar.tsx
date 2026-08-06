@@ -4,6 +4,7 @@ import { useSettingsStore } from '../stores/settings'
 import { useColors } from '../theme'
 import { t } from '../utils/i18n'
 import PromptDialog from './PromptDialog'
+import ConfirmDialog from './ConfirmDialog'
 
 export default function Sidebar() {
   const colors = useColors()
@@ -12,8 +13,13 @@ export default function Sidebar() {
   const sidebarSelection = useNotesStore((s) => s.sidebarSelection)
   const setSidebarSelection = useNotesStore((s) => s.setSidebarSelection)
   const createFolder = useNotesStore((s) => s.createFolder)
+  const renameFolder = useNotesStore((s) => s.renameFolder)
+  const deleteFolder = useNotesStore((s) => s.deleteFolder)
   const openSettings = useSettingsStore((s) => s.openSettings)
   const [showNewFolder, setShowNewFolder] = useState(false)
+  const [hoverFolder, setHoverFolder] = useState<string | null>(null)
+  const [renamingFolder, setRenamingFolder] = useState<string | null>(null)
+  const [deletingFolder, setDeletingFolder] = useState<string | null>(null)
 
   const filterItems: Array<{ type: SidebarSelection; label: string }> = [
     { type: { type: 'all' }, label: t('all.notes', lang) },
@@ -35,6 +41,11 @@ export default function Sidebar() {
   const handleNewFolder = (name: string) => {
     createFolder(name)
     setShowNewFolder(false)
+  }
+
+  const handleRenameFolder = (name: string) => {
+    if (renamingFolder) renameFolder(renamingFolder, name)
+    setRenamingFolder(null)
   }
 
   return (
@@ -71,8 +82,28 @@ export default function Sidebar() {
               ...(isSelected({ type: 'folder', path: folder }) ? itemSelectedStyle(colors) : {}),
             }}
             onClick={() => setSidebarSelection({ type: 'folder', path: folder })}
+            onMouseEnter={() => setHoverFolder(folder)}
+            onMouseLeave={() => setHoverFolder(null)}
           >
-            {'\u2514'} {folder}
+            <span style={folderNameStyle}>{"\u2514"} {folder}</span>
+            {hoverFolder === folder && (
+              <span style={folderActionsStyle}>
+                <button
+                  style={folderActionBtn(colors)}
+                  title={t('rename', lang)}
+                  onClick={(e) => { e.stopPropagation(); setRenamingFolder(folder) }}
+                >
+                  {'\u270E'}
+                </button>
+                <button
+                  style={folderActionBtn(colors)}
+                  title={t('delete', lang)}
+                  onClick={(e) => { e.stopPropagation(); setDeletingFolder(folder) }}
+                >
+                  {'\u2715'}
+                </button>
+              </span>
+            )}
           </div>
         ))}
         {folders.length === 0 && (
@@ -93,6 +124,26 @@ export default function Sidebar() {
           confirmLabel={t('folder.create', lang)}
           onConfirm={handleNewFolder}
           onCancel={() => setShowNewFolder(false)}
+        />
+      )}
+
+      {renamingFolder && (
+        <PromptDialog
+          message={t('rename.folder', lang)}
+          initialValue={renamingFolder}
+          confirmLabel={t('rename', lang)}
+          onConfirm={handleRenameFolder}
+          onCancel={() => setRenamingFolder(null)}
+        />
+      )}
+
+      {deletingFolder && (
+        <ConfirmDialog
+          message={`${t('delete.folder.confirm', lang)} "${deletingFolder}"`}
+          confirmLabel={t('delete', lang)}
+          cancelLabel={t('cancel', lang)}
+          onConfirm={() => { deleteFolder(deletingFolder); setDeletingFolder(null) }}
+          onCancel={() => setDeletingFolder(null)}
         />
       )}
     </div>
@@ -137,6 +188,29 @@ const itemStyle = (c: any) => ({
   color: c.fgSidebar,
   fontSize: 13,
   transition: 'background 0.1s',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 6,
+})
+const folderNameStyle: React.CSSProperties = {
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+}
+const folderActionsStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 2,
+  flexShrink: 0,
+  marginLeft: 6,
+}
+const folderActionBtn = (c: any) => ({
+  fontSize: 12,
+  color: c.comment,
+  padding: '2px 4px',
+  borderRadius: 4,
+  lineHeight: 1,
 })
 const itemSelectedStyle = (c: any) => ({
   background: c.bgHighlight,
