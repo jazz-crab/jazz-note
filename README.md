@@ -6,6 +6,8 @@ Second Brain — a local-first Markdown note-taking app with Obsidian-style inli
 
 Built with Electron + React + TypeScript on top of CodeMirror 6. Notes live as plain `.md` files on your disk — no lock-in, no database, fully yours.
 
+Inspired by [Obsidian](https://obsidian.md): a plain-Markdown vault with inline live preview, designed to feel familiar to Obsidian users.
+
 **Status:** early stage (v0.1.0), already usable for daily notes.
 
 ## Features

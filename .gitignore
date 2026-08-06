@@ -4,7 +4,6 @@ dist/
 *.db
 *.log
 .DS_Store
-AGENTS.md
 
 # personal notes vault (if a custom notes dir is ever pointed into the repo)
 jazz-notes/
