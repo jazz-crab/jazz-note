@@ -15,14 +15,14 @@ Inspired by [Obsidian](https://obsidian.md): a plain-Markdown vault with inline 
 ### Editing
 - **Inline live preview** — `# Heading`, `**bold**`, links and lists render right in the editor (Obsidian-style)
 - **Code fence highlighting** — JS/TS, Python, Go, Rust, Ruby, Swift, Shell, TOML, Dockerfile, HTML, CSS, JSON, YAML, Markdown, Java, C/C++, PHP, SQL, XML
-- **Per-note undo/redo** — persistent across restarts (200 steps), with a step-counter toast
+- **Per-note undo/redo** — seeded from the git history (up to 500 versions) and extended live, so `Ctrl/Cmd+Z` can walk a note back to its very first saved state; step-counter toast
 - **Keyboard shortcuts** — `Ctrl/Cmd+S` save, `Ctrl/Cmd+Z` undo, `Shift+Ctrl/Cmd+Z` / `Ctrl/Cmd+Y` redo
 
 ### Notes
 - **Plain Markdown files** in a vault folder (customizable — pick any folder in Settings; defaults to `~/Documents/jazz-notes`, auto-created)
 - **Full CRUD** — create, edit, delete notes and folders; **nested folders** at any depth
 - **Right-click menu** — on a note: rename, change date/color, delete; on a folder: rename, move (into another folder or to root), delete
-- **New note goes to the selected folder** — when a folder is active in the sidebar, new notes are created inside it; a new folder is created inside the selected one too
+- **New note goes to the selected folder** — when a folder is active in the sidebar, new notes are created inside it; a new folder is created inside the selected one too. The vault root is selectable (named after the storage folder), so you can create notes and folders at the root level as well
 - **Search** — full-text over title and body, case-insensitive
 - **Filters** — All / Today / Tomorrow / This week / Later / No date
 - **Sorting** — by last updated / created / due date
@@ -30,10 +30,19 @@ Inspired by [Obsidian](https://obsidian.md): a plain-Markdown vault with inline 
 - **Countdown to the next due note** — always visible at the top of the main screen, ticks in real time; can be hidden (the × on the bar or a toggle in Settings), preference is remembered
 
 ### Reliability
-- **Debounced autosave** (1 s) with a live save-status indicator (idle → dirty → saving → saved/error)
+- **Debounced autosave** (400 ms on text, immediate on leaving a note) with a live save-status indicator (idle → dirty → saving → saved/error)
 - **File watcher** (chokidar) — external edits are picked up automatically
 - **Single-instance app**, context-isolated preload bridge, no menu chrome
 - **Unit tests (Vitest) + CI** — GitHub Actions runs tests and builds on every push
+
+### Sync & versioning
+- **Git-backed vault** — the notes folder is a git repository; every autosave becomes a commit, so nothing is lost
+- **No system git required** — all git operations are handled in-process by a pure-JS engine (isomorphic-git), so the app works on any machine without installing anything
+- **Per-note version history** — a history button in the editor lists past versions; preview any version and restore it (restores are new commits, nothing is rewritten)
+- **Server sync over git smart HTTP** — the vault pushes/pulls to a bare git repo served over HTTPS (`https://rentgen.su/git/jazz-notes.git` by default; URL, login and token editable in Settings). Non-conflicting changes merge automatically
+- **Easy multi-device onboarding** — Settings can generate a 12-character sync token and apply it to the server over SSH (embedded ssh2, no system git/ssh needed), then share it as a **QR code** or a copyable string; on another device scan the QR or paste the string to connect
+- **Sync indicator** — a dot in the top-right corner: green = synced, yellow = server unavailable, red = error, orange = conflicts; click for details, a manual sync button and conflict resolution
+- **Conflict resolution** — when the same file was changed on both sides, pick local or server version per file (with a preview) and apply
 
 ### Appearance
 - **3 palettes** — TokyoNight, Everforest, Catppuccin — each with **dark and light** variants

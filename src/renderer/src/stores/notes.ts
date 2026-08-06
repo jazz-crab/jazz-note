@@ -5,6 +5,7 @@ import { useSettingsStore } from './settings'
 import { debounce } from '../utils/debounce'
 import { replaceFirstHeading } from '../utils/note'
 import { parentOf, moveFolderPath } from '../utils/folder'
+import { historyStore } from './history'
 
 const ID_DIGITS = 5
 const ID_STORAGE_KEY = 'jazz-note:next-id'
@@ -67,6 +68,7 @@ interface NotesState {
   setSidebarSelection: (sel: SidebarSelection) => void
   setSearchQuery: (q: string) => void
   setSortBy: (s: SortBy) => void
+  replaceNote: (relPath: string, note: Note) => void
   createFolder: (name: string) => Promise<void>
   renameFolder: (folder: string, newName: string) => Promise<void>
   moveFolder: (folder: string, dest: string | null) => Promise<void>
@@ -139,6 +141,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     const dirty = new Set(get().dirtyNotes)
     dirty.delete(relPath)
     set({ currentNote: note, dirtyNotes: dirty })
+    void historyStore.seedFromGit(relPath, notesPath)
   },
 
   updateCurrentNote: (body: string) => {
@@ -259,6 +262,16 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   setSidebarSelection: (sel) => set({ sidebarSelection: sel }),
   setSearchQuery: (q) => set({ searchQuery: q }),
   setSortBy: (s) => set({ sortBy: s }),
+
+  replaceNote: (relPath, note) => {
+    const dirty = new Set(get().dirtyNotes)
+    dirty.delete(relPath)
+    set({
+      currentNote: note,
+      dirtyNotes: dirty,
+      notes: get().notes.map((n) => (n.relPath === relPath ? note : n)),
+    })
+  },
 
   createFolder: async (name: string) => {
     const n = name.trim().replace(/[/\\]/g, '')

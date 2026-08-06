@@ -12,6 +12,7 @@ import Modal from './Modal'
 export default function Sidebar() {
   const colors = useColors()
   const lang = useSettingsStore((s) => s.lang)
+  const notesPath = useSettingsStore((s) => s.notesPath) || useNotesStore((s) => s.notesPath)
   const folders = useNotesStore((s) => s.folders)
   const sidebarSelection = useNotesStore((s) => s.sidebarSelection)
   const setSidebarSelection = useNotesStore((s) => s.setSidebarSelection)
@@ -54,6 +55,7 @@ export default function Sidebar() {
   }
 
   const sortedFolders = [...folders].sort()
+  const vaultName = leafName(notesPath) || t('all.notes', lang)
 
   const moveTargets = movingFolder
     ? folders
@@ -86,6 +88,19 @@ export default function Sidebar() {
         <div style={sectionHeader(colors)}>
           <span>{t('folders', lang)}</span>
           <button style={addBtn(colors)} onClick={() => setShowNewFolder(true)}>+</button>
+        </div>
+        <div
+          key="__vault_root__"
+          title={notesPath}
+          style={{
+            ...itemStyle(colors),
+            ...(isSelected({ type: 'folder', path: '' }) ? itemSelectedStyle(colors) : {}),
+          }}
+          onClick={() => setSidebarSelection({ type: 'folder', path: '' })}
+        >
+          <span style={{ ...folderNameStyle, ...rootNameStyle(colors) }}>
+            {"\u2514"} {vaultName}
+          </span>
         </div>
         {sortedFolders.map((folder) => (
           <div
@@ -239,6 +254,10 @@ const folderNameStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
   flex: 1,
 }
+const rootNameStyle = (c: any): React.CSSProperties => ({
+  fontWeight: 600,
+  color: c.blue,
+})
 const itemSelectedStyle = (c: any) => ({
   background: c.bgHighlight,
   color: c.blue,

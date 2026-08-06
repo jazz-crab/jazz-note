@@ -19,3 +19,8 @@ export function moveFolderPath(folder: string, dest: string | null): string {
   const leaf = leafName(folder)
   return dest ? `${dest}/${leaf}` : leaf
 }
+
+export function isInFolder(relPath: string, folder: string): boolean {
+  if (!folder) return !relPath.includes('/')
+  return relPath.startsWith(folder + '/')
+}

@@ -3,10 +3,13 @@ import { useNotesStore, type SortBy, type Note } from '../stores/notes'
 import { useColors } from '../theme'
 import { t } from '../utils/i18n'
 import { useSettingsStore } from '../stores/settings'
+import { useSyncStore } from '../stores/sync'
+import { isInFolder } from '../utils/folder'
 import Sidebar from '../components/Sidebar'
 import NoteCard from '../components/NoteCard'
 import ConfirmDialog from '../components/ConfirmDialog'
 import NextDueTimer from '../components/NextDueTimer'
+import SyncIndicator from '../components/SyncIndicator'
 import ContextMenu from '../components/ContextMenu'
 import Modal from '../components/Modal'
 import PromptDialog from '../components/PromptDialog'
@@ -104,6 +107,10 @@ export default function NoteList({ onSelectNote }: Props) {
   }, [])
 
   useEffect(() => {
+    void useSyncStore.getState().startup()
+  }, [])
+
+  useEffect(() => {
     const unsub = window.jazz.onNotesChanged((relPath) => {
       useNotesStore.getState().handleExternalChange(relPath)
     })
@@ -112,7 +119,7 @@ export default function NoteList({ onSelectNote }: Props) {
 
   let filtered = notes.filter((n) => {
     if (sidebarSelection.type === 'folder') {
-      if (!n.relPath.startsWith(sidebarSelection.path + '/')) return false
+      if (!isInFolder(n.relPath, sidebarSelection.path)) return false
     }
     if (sidebarSelection.type === 'today') {
       if (!n.meta.due) return false
@@ -219,6 +226,7 @@ export default function NoteList({ onSelectNote }: Props) {
               </button>
             ))}
           </div>
+          <SyncIndicator />
         </div>
 
         <div style={listStyle}>

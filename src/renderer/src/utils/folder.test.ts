@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { leafName, parentOf, depthOf, isSelfOrChild, moveFolderPath } from './folder'
+import { leafName, parentOf, depthOf, isSelfOrChild, moveFolderPath, isInFolder } from './folder'
 
 describe('leafName', () => {
   it('returns the last segment', () => {
@@ -39,5 +39,19 @@ describe('moveFolderPath', () => {
     expect(moveFolderPath('a/b', 'x')).toBe('x/b')
     expect(moveFolderPath('a/b', null)).toBe('b')
     expect(moveFolderPath('root', 'x')).toBe('x/root')
+  })
+})
+
+describe('isInFolder', () => {
+  it('matches notes directly inside a folder and deeper', () => {
+    expect(isInFolder('a/1.md', 'a')).toBe(true)
+    expect(isInFolder('a/b/1.md', 'a')).toBe(true)
+    expect(isInFolder('ab/1.md', 'a')).toBe(false)
+    expect(isInFolder('1.md', 'a')).toBe(false)
+  })
+
+  it('matches only root-level notes when folder is empty', () => {
+    expect(isInFolder('1.md', '')).toBe(true)
+    expect(isInFolder('a/1.md', '')).toBe(false)
   })
 })

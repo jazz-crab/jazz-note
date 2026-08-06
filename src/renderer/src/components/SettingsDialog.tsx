@@ -1,10 +1,14 @@
-import { useEffect } from 'react'
-import { useSettingsStore } from '../stores/settings'
+import { useEffect, useState } from 'react'
+import { useSettingsStore, DEFAULT_SYNC_REMOTE } from '../stores/settings'
+import { useSyncStore } from '../stores/sync'
 import { palettes } from '../theme/themes'
 import { fontOptions } from '../utils/fonts'
 import { useColors, useIsDark } from '../theme'
 import { t, langLabels, type Lang } from '../utils/i18n'
 import { useNotesStore } from '../stores/notes'
+import { generateSyncToken, decodeSyncConfig } from '../../../shared/syncConfig'
+import SyncShareDialog from './SyncShareDialog'
+import SyncScanDialog from './SyncScanDialog'
 
 export default function SettingsDialog() {
   const colors = useColors()
@@ -22,13 +26,71 @@ export default function SettingsDialog() {
   const setNotesPath = useSettingsStore((s) => s.setNotesPath)
   const showCountdown = useSettingsStore((s) => s.showCountdown)
   const setShowCountdown = useSettingsStore((s) => s.setShowCountdown)
+  const syncRemote = useSettingsStore((s) => s.syncRemote)
+  const setSyncRemote = useSettingsStore((s) => s.setSyncRemote)
+  const syncUser = useSettingsStore((s) => s.syncUser)
+  const setSyncUser = useSettingsStore((s) => s.setSyncUser)
+  const syncPass = useSettingsStore((s) => s.syncPass)
+  const setSyncPass = useSettingsStore((s) => s.setSyncPass)
+  const sshHost = useSettingsStore((s) => s.sshHost)
+  const setSshHost = useSettingsStore((s) => s.setSshHost)
+  const sshUser = useSettingsStore((s) => s.sshUser)
+  const setSshUser = useSettingsStore((s) => s.setSshUser)
+  const sshKey = useSettingsStore((s) => s.sshKey)
+  const setSshKey = useSettingsStore((s) => s.setSshKey)
+  const syncNow = useSyncStore((s) => s.syncNow)
+  const syncStatus = useSyncStore((s) => s.status)
   const loadNotes = useNotesStore((s) => s.loadNotes)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [scanOpen, setScanOpen] = useState(false)
+  const [importText, setImportText] = useState('')
+  const [importError, setImportError] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [genError, setGenError] = useState<string | null>(null)
 
   const handlePickFolder = async () => {
     const dir = await window.jazz.selectDirectory()
     if (!dir) return
     setNotesPath(dir)
     await loadNotes()
+  }
+
+  const handleGeneratePassword = async () => {
+    setGenerating(true)
+    setGenError(null)
+    const token = generateSyncToken()
+    const result = await window.jazz.gitApplySyncPassword(
+      { host: sshHost, port: 22, user: sshUser, keyPath: sshKey || undefined },
+      token
+    )
+    setGenerating(false)
+    if (result.ok) {
+      setSyncUser(syncUser || 'vault')
+      setSyncPass(token)
+      setShareOpen(true)
+    } else {
+      setGenError(result.error || '')
+    }
+  }
+
+  const handleScan = (config: { url: string; user: string; token: string }) => {
+    setScanOpen(false)
+    setSyncRemote(config.url)
+    setSyncUser(config.user)
+    setSyncPass(config.token)
+  }
+
+  const handleImport = () => {
+    const config = decodeSyncConfig(importText)
+    if (!config) {
+      setImportError(true)
+      return
+    }
+    setImportError(false)
+    setImportText('')
+    setSyncRemote(config.url)
+    setSyncUser(config.user)
+    setSyncPass(config.token)
   }
 
   useEffect(() => {
@@ -130,6 +192,104 @@ export default function SettingsDialog() {
           </div>
 
           <div style={groupStyle}>
+            <label style={labelStyle(colors)}>{t('sync.server', lang)}</label>
+            <input
+              style={syncInputStyle(colors)}
+              value={syncRemote}
+              onChange={(e) => setSyncRemote(e.target.value)}
+              placeholder={DEFAULT_SYNC_REMOTE}
+              spellCheck={false}
+            />
+            <div style={hintStyle(colors)}>{t('sync.server.hint', lang)}</div>
+            <label style={labelStyle(colors)}>{t('sync.user', lang)}</label>
+            <input
+              style={syncInputStyle(colors)}
+              value={syncUser}
+              onChange={(e) => setSyncUser(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+            />
+            <div style={hintStyle(colors)}>{t('sync.user.hint', lang)}</div>
+            <label style={labelStyle(colors)}>{t('sync.password', lang)}</label>
+            <input
+              style={syncInputStyle(colors)}
+              type="password"
+              value={syncPass}
+              onChange={(e) => setSyncPass(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+            />
+            <div style={hintStyle(colors)}>{t('sync.password.hint', lang)}</div>
+            <div style={btnRowStyle}>
+              <button
+                style={actionBtnStyle(colors)}
+                onClick={() => void handleGeneratePassword()}
+                disabled={generating}
+              >
+                {generating ? t('sync.generating', lang) : t('sync.gen', lang)}
+              </button>
+              <button style={actionBtnStyle(colors)} onClick={() => setShareOpen(true)}>
+                {t('sync.share', lang)}
+              </button>
+              <button style={actionBtnStyle(colors)} onClick={() => setScanOpen(true)}>
+                {t('sync.scan', lang)}
+              </button>
+            </div>
+            <div style={hintStyle(colors)}>{t('sync.gen.hint', lang)}</div>
+            {genError && <div style={errorTextStyle(colors)}>{t('sync.gen.failed', lang).replace('{error}', genError)}</div>}
+            <div style={syncRowStyle}>
+              <button style={syncBtnStyle(colors)} onClick={() => void syncNow()}>
+                {syncStatus === 'syncing' ? t('sync.syncing', lang) : t('sync.now', lang)}
+              </button>
+            </div>
+            <div style={importRowStyle}>
+              <input
+                style={syncInputStyle(colors)}
+                value={importText}
+                onChange={(e) => {
+                  setImportText(e.target.value)
+                  setImportError(false)
+                }}
+                placeholder={t('sync.import.placeholder', lang)}
+                spellCheck={false}
+              />
+              <button style={importBtnStyle(colors)} onClick={handleImport}>
+                {t('sync.import.apply', lang)}
+              </button>
+            </div>
+            <div style={hintStyle(colors)}>{t('sync.import.label', lang)}</div>
+            {importError && <div style={errorTextStyle(colors)}>{t('sync.import.invalid', lang)}</div>}
+            <details style={sshDetailsStyle(colors)}>
+              <summary style={sshSummaryStyle(colors)}>{t('sync.ssh', lang)}</summary>
+              <div style={sshFieldsStyle}>
+                <label style={labelStyle(colors)}>{t('sync.ssh.host', lang)}</label>
+                <input
+                  style={syncInputStyle(colors)}
+                  value={sshHost}
+                  onChange={(e) => setSshHost(e.target.value)}
+                  spellCheck={false}
+                />
+                <label style={labelStyle(colors)}>{t('sync.ssh.user', lang)}</label>
+                <input
+                  style={syncInputStyle(colors)}
+                  value={sshUser}
+                  onChange={(e) => setSshUser(e.target.value)}
+                  spellCheck={false}
+                />
+                <label style={labelStyle(colors)}>{t('sync.ssh.key', lang)}</label>
+                <input
+                  style={syncInputStyle(colors)}
+                  value={sshKey}
+                  onChange={(e) => setSshKey(e.target.value)}
+                  placeholder="~/.ssh/id_ed25519"
+                  spellCheck={false}
+                />
+                <div style={hintStyle(colors)}>{t('sync.ssh.key.hint', lang)}</div>
+              </div>
+            </details>
+          </div>
+
+          <div style={groupStyle}>
             <label style={labelStyle(colors)}>{t('font', lang)}</label>
             <div style={fontListStyle}>
               {fontOptions.map((f) => (
@@ -151,6 +311,8 @@ export default function SettingsDialog() {
           </div>
         </div>
       </div>
+      {shareOpen && <SyncShareDialog onClose={() => setShareOpen(false)} />}
+      {scanOpen && <SyncScanDialog onScanned={handleScan} onClose={() => setScanOpen(false)} />}
     </div>
   )
 }
@@ -351,5 +513,87 @@ const folderBtnStyle = (c: any) => ({
   fontWeight: 600,
   cursor: 'pointer',
   whiteSpace: 'nowrap' as const,
+  transition: 'background 0.15s',
+})
+const syncInputStyle = (c: any) => ({
+  padding: '8px 12px',
+  background: c.bg,
+  border: `1px solid ${c.border}`,
+  borderRadius: 6,
+  color: c.fg,
+  fontSize: 13,
+  fontFamily: 'var(--app-font)',
+})
+const hintStyle = (c: any) => ({
+  fontSize: 11,
+  color: c.comment,
+  lineHeight: 1.4,
+})
+const syncRowStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+}
+const btnRowStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+}
+const actionBtnStyle = (c: any) => ({
+  padding: '6px 12px',
+  background: c.bg,
+  border: `1px solid ${c.border}`,
+  borderRadius: 6,
+  color: c.fg,
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: 'pointer',
+  transition: 'background 0.15s',
+  opacity: 'var(--btn-dim)',
+})
+const importRowStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: 8,
+}
+const importBtnStyle = (c: any) => ({
+  padding: '6px 12px',
+  background: c.bg,
+  border: `1px solid ${c.blue}`,
+  borderRadius: 6,
+  color: c.blue,
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap' as const,
+  transition: 'background 0.15s',
+})
+const errorTextStyle = (c: any) => ({
+  fontSize: 12,
+  color: c.red,
+})
+const sshDetailsStyle = (c: any) => ({
+  borderTop: `1px solid ${c.border}`,
+  paddingTop: 8,
+})
+const sshSummaryStyle = (c: any) => ({
+  fontSize: 12,
+  color: c.blue,
+  cursor: 'pointer',
+  userSelect: 'none' as const,
+})
+const sshFieldsStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 6,
+  paddingTop: 8,
+}
+const syncBtnStyle = (c: any) => ({
+  padding: '6px 12px',
+  background: c.bg,
+  border: `1px solid ${c.green}`,
+  borderRadius: 6,
+  color: c.green,
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
   transition: 'background 0.15s',
 })

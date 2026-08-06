@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { SyncResult, GitCommitInfo, GitAuth, SshSettings } from '../shared/types'
 
 const api = {
   getPath: (): Promise<string> => ipcRenderer.invoke('notes:getPath'),
@@ -24,6 +25,26 @@ const api = {
     ipcRenderer.invoke('history:read'),
   writeHistory: (data: unknown): Promise<boolean> =>
     ipcRenderer.invoke('history:write', data),
+
+  gitEnsure: (repoDir: string, remoteUrl: string): Promise<boolean> =>
+    ipcRenderer.invoke('git:ensure', repoDir, remoteUrl),
+  gitCommit: (repoDir: string, message?: string): Promise<boolean> =>
+    ipcRenderer.invoke('git:commit', repoDir, message),
+  gitSync: (repoDir: string, auth?: GitAuth): Promise<SyncResult> =>
+    ipcRenderer.invoke('git:sync', repoDir, auth),
+  gitResolveConflicts: (
+    repoDir: string,
+    picks: Array<{ file: string; source: 'local' | 'remote' }>,
+    auth?: GitAuth
+  ): Promise<SyncResult> => ipcRenderer.invoke('git:resolveConflicts', repoDir, picks, auth),
+  gitHistory: (repoDir: string, relPath: string, limit?: number): Promise<GitCommitInfo[]> =>
+    ipcRenderer.invoke('git:history', repoDir, relPath, limit),
+  gitShow: (repoDir: string, relPath: string, hash: string): Promise<string | null> =>
+    ipcRenderer.invoke('git:show', repoDir, relPath, hash),
+  gitRestore: (repoDir: string, relPath: string, hash: string): Promise<string | null> =>
+    ipcRenderer.invoke('git:restore', repoDir, relPath, hash),
+  gitApplySyncPassword: (ssh: SshSettings, token: string): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('git:applySyncPassword', ssh, token),
 
   onNotesChanged: (cb: (relPath: string) => void) => {
     const handler = (_event: any, relPath: string) => cb(relPath)

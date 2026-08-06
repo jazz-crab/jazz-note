@@ -11,6 +11,7 @@ import NoteEditor from '../components/NoteEditor'
 import DatePicker from '../components/DatePicker'
 import ColorPicker from '../components/ColorPicker'
 import SaveStatusCircle, { type SaveStatus } from '../components/SaveStatusCircle'
+import HistoryDialog from '../components/HistoryDialog'
 import SidePanel from '../components/SidePanel'
 import UndoToast from '../components/UndoToast'
 
@@ -36,6 +37,7 @@ export default function NoteEdit({ relPath, onBack }: Props) {
   const [lastError, setLastError] = useState<string | null>(null)
   const [sheet, setSheet] = useState<'color' | 'date' | null>(null)
   const [leaving, setLeaving] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
 
   useEffect(() => {
     setCurrentNote(relPath)
@@ -55,8 +57,9 @@ export default function NoteEdit({ relPath, onBack }: Props) {
   const handleBack = useCallback(() => {
     if (leaving) return
     setLeaving(true)
+    if (isDirty) void performSaveRef.current()
     backFallbackRef.current = setTimeout(onBack, 260)
-  }, [leaving, onBack])
+  }, [leaving, isDirty, onBack])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -83,7 +86,7 @@ export default function NoteEdit({ relPath, onBack }: Props) {
   }
   const scheduleSave = useRef(debounce(() => {
     void performSaveRef.current()
-  }, 1000)).current
+  }, 400)).current
 
   useEffect(() => {
     if (currentNote?.relPath) {
@@ -157,8 +160,19 @@ export default function NoteEdit({ relPath, onBack }: Props) {
           placeholder={t('untitled', lang)}
           onChange={(e) => handleTitleChange(e.target.value)}
         />
+        <button
+          style={historyBtnStyle(colors)}
+          onClick={() => setShowHistory(true)}
+          title={t('history.title', lang)}
+        >
+          <span style={{ ...iconStyle, fontSize: 18 }}>{'\uf1da'}</span>
+        </button>
         <SaveStatusCircle status={status} lastSavedAt={lastSavedAt} error={lastError} />
       </div>
+
+      {showHistory && (
+        <HistoryDialog relPath={currentNote.relPath} onClose={() => setShowHistory(false)} />
+      )}
 
       <UndoToast />
 
@@ -271,6 +285,12 @@ const titleInputStyle = (c: any) => ({
   color: c.fg,
   padding: '4px 0',
   background: 'transparent',
+})
+const historyBtnStyle = (c: any) => ({
+  color: c.purple,
+  padding: '4px 6px',
+  borderRadius: 4,
+  flexShrink: 0,
 })
 const iconStyle: React.CSSProperties = {
   fontFamily: 'Symbols Nerd Font',

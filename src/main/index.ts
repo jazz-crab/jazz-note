@@ -1,13 +1,37 @@
-import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, Menu, session } from 'electron'
 import { join } from 'path'
 import { readdir, readFile, writeFile, unlink, mkdir, rm, rename } from 'fs/promises'
 import { existsSync } from 'fs'
 import { watch } from 'chokidar'
+import {
+  ensureRepo,
+  commitAll,
+  sync as gitSync,
+  resolveConflicts as gitResolveConflicts,
+  history as gitHistory,
+  show as gitShow,
+  restore as gitRestore,
+  applySyncPassword,
+  type SyncResult,
+  type GitCommitInfo,
+  type GitAuth,
+  type SshSettings,
+} from './git'
 
 let mainWindow: BrowserWindow | null = null
 let watcher: ReturnType<typeof watch> | null = null
 
 const isDev = !!process.env.ELECTRON_RENDERER_URL
+
+let commitTimer: ReturnType<typeof setTimeout> | null = null
+
+function scheduleCommit(repoDir: string) {
+  if (commitTimer) clearTimeout(commitTimer)
+  commitTimer = setTimeout(() => {
+    commitTimer = null
+    commitAll(repoDir).catch(() => {})
+  }, 300)
+}
 
 function getDefaultNotesPath(): string {
   return join(app.getPath('documents'), 'jazz-notes')
@@ -24,7 +48,8 @@ function startWatching(notesPath: string) {
   watcher = watch(notesPath, {
     persistent: true,
     ignoreInitial: true,
-    depth: 10
+    depth: 10,
+    ignored: /(^|[\/\\])\.git(\/|$)/,
   })
   watcher.on('all', (_event, filePath) => {
     const rel = filePath.replace(notesPath, '').replace(/\\/g, '/')
@@ -79,6 +104,7 @@ function registerIpc() {
     const fullPath = join(notesPath, relPath)
     await ensureNotesDir(notesPath)
     await writeFile(fullPath, content, 'utf-8')
+    scheduleCommit(notesPath)
     return true
   })
 
@@ -94,6 +120,7 @@ function registerIpc() {
     const fullPath = join(notesPath, relPath)
     await ensureNotesDir(notesPath)
     await writeFile(fullPath, content, 'utf-8')
+    scheduleCommit(notesPath)
     return true
   })
 
@@ -101,6 +128,7 @@ function registerIpc() {
     const notesPath = dirPath || getDefaultNotesPath()
     const fullPath = join(notesPath, relPath)
     await mkdir(fullPath, { recursive: true })
+    scheduleCommit(notesPath)
     return true
   })
 
@@ -108,6 +136,7 @@ function registerIpc() {
     const notesPath = dirPath || getDefaultNotesPath()
     const fullPath = join(notesPath, relPath)
     await rm(fullPath, { recursive: true, force: true })
+    scheduleCommit(notesPath)
     return true
   })
 
@@ -118,6 +147,7 @@ function registerIpc() {
     await ensureNotesDir(notesPath)
     await mkdir(join(newFullPath, '..'), { recursive: true })
     await rename(fullPath, newFullPath)
+    scheduleCommit(notesPath)
     return true
   })
 
@@ -166,6 +196,50 @@ function registerIpc() {
     if (result.canceled) return null
     return result.filePaths[0]
   })
+
+  ipcMain.handle('git:ensure', async (_event, repoDir: string, remoteUrl: string) => {
+    await ensureRepo(repoDir, remoteUrl)
+    return true
+  })
+
+  ipcMain.handle('git:commit', async (_event, repoDir: string, message?: string) => {
+    return commitAll(repoDir, message)
+  })
+
+  ipcMain.handle('git:sync', async (_event, repoDir: string, auth?: GitAuth): Promise<SyncResult> => {
+    return gitSync(repoDir, auth)
+  })
+
+  ipcMain.handle(
+    'git:resolveConflicts',
+    async (
+      _event,
+      repoDir: string,
+      picks: Array<{ file: string; source: 'local' | 'remote' }>,
+      auth?: GitAuth
+    ): Promise<SyncResult> => {
+      return gitResolveConflicts(repoDir, picks, auth)
+    }
+  )
+
+  ipcMain.handle('git:history', async (_event, repoDir: string, relPath: string, limit?: number): Promise<GitCommitInfo[]> => {
+    return gitHistory(repoDir, relPath, limit)
+  })
+
+  ipcMain.handle('git:show', async (_event, repoDir: string, relPath: string, hash: string): Promise<string | null> => {
+    return gitShow(repoDir, relPath, hash)
+  })
+
+  ipcMain.handle('git:restore', async (_event, repoDir: string, relPath: string, hash: string): Promise<string | null> => {
+    return gitRestore(repoDir, relPath, hash)
+  })
+
+  ipcMain.handle(
+    'git:applySyncPassword',
+    async (_event, ssh: SshSettings, token: string): Promise<{ ok: boolean; error?: string }> => {
+      return applySyncPassword(ssh, token)
+    }
+  )
 }
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
@@ -181,6 +255,9 @@ if (!gotSingleInstanceLock) {
   })
 
   app.whenReady().then(() => {
+    session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+      callback(['media', 'camera'].includes(permission))
+    })
     createWindow()
     registerIpc()
 

@@ -1,3 +1,5 @@
+import type { SyncResult, GitCommitInfo, GitAuth, SshSettings } from '../shared/types'
+
 export interface JazzAPI {
   getPath: () => Promise<string>
   readDirRecursive: (dirPath?: string) => Promise<string[]>
@@ -11,6 +13,21 @@ export interface JazzAPI {
   selectDirectory: () => Promise<string | null>
   readHistory: () => Promise<Record<string, unknown>>
   writeHistory: (data: unknown) => Promise<boolean>
+  gitEnsure: (repoDir: string, remoteUrl: string) => Promise<boolean>
+  gitCommit: (repoDir: string, message?: string) => Promise<boolean>
+  gitSync: (repoDir: string, auth?: GitAuth) => Promise<SyncResult>
+  gitResolveConflicts: (
+    repoDir: string,
+    picks: Array<{ file: string; source: 'local' | 'remote' }>,
+    auth?: GitAuth
+  ) => Promise<SyncResult>
+  gitHistory: (repoDir: string, relPath: string, limit?: number) => Promise<GitCommitInfo[]>
+  gitShow: (repoDir: string, relPath: string, hash: string) => Promise<string | null>
+  gitRestore: (repoDir: string, relPath: string, hash: string) => Promise<string | null>
+  gitApplySyncPassword: (
+    ssh: SshSettings,
+    token: string
+  ) => Promise<{ ok: boolean; error?: string }>
   onNotesChanged: (cb: (relPath: string) => void) => () => void
 }
 
