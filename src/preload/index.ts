@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { SyncResult, GitCommitInfo, GitAuth, SshSettings } from '../shared/types'
+import type { SyncResult, GitCommitInfo, GitAuth } from '../shared/types'
 
 const api = {
   getPath: (): Promise<string> => ipcRenderer.invoke('notes:getPath'),
@@ -43,8 +43,6 @@ const api = {
     ipcRenderer.invoke('git:show', repoDir, relPath, hash),
   gitRestore: (repoDir: string, relPath: string, hash: string): Promise<string | null> =>
     ipcRenderer.invoke('git:restore', repoDir, relPath, hash),
-  gitApplySyncPassword: (ssh: SshSettings, token: string): Promise<{ ok: boolean; error?: string }> =>
-    ipcRenderer.invoke('git:applySyncPassword', ssh, token),
 
   onNotesChanged: (cb: (relPath: string) => void) => {
     const handler = (_event: any, relPath: string) => cb(relPath)

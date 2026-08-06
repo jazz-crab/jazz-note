@@ -3,14 +3,6 @@ export interface GitAuth {
   password?: string
 }
 
-export interface SshSettings {
-  host: string
-  port?: number
-  user: string
-  keyPath?: string
-  password?: string
-}
-
 export interface GitCommitInfo {
   hash: string
   shortHash: string

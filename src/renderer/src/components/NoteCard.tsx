@@ -3,6 +3,7 @@ import { useColors, useNoteColors } from '../theme'
 import { mixHex } from '../utils/color'
 import { useSettingsStore } from '../stores/settings'
 import { localeOf, t } from '../utils/i18n'
+import { parentOf, leafName } from '../utils/folder'
 import type React from 'react'
 
 interface Props {
@@ -21,6 +22,7 @@ export default function NoteCard({ note, isActive, onClick, onContextMenu }: Pro
   const isOverdue = due && due < new Date()
   const preview = note.body.replace(/^#+\s*/gm, '').replace(/[*~`>-]/g, '').trim().slice(0, 140)
   const cardBg = noteColor ? mixHex(noteColor, colors.bgAlt, 0.1) : undefined
+  const folder = parentOf(note.relPath)
 
   return (
     <div
@@ -41,6 +43,11 @@ export default function NoteCard({ note, isActive, onClick, onContextMenu }: Pro
         </div>
         {preview && <div style={previewStyle(colors)}>{preview}</div>}
         <div style={styles.footer}>
+          {folder && (
+            <span style={pillStyle(colors)} title={folder}>
+              {leafName(folder)}
+            </span>
+          )}
           {due && (
             <span style={{ ...dueStyle(colors), ...(isOverdue ? overdueStyle(colors) : {}) }}>
               {due.toLocaleDateString(localeOf(lang), { day: 'numeric', month: 'short' })}
@@ -102,3 +109,15 @@ const previewStyle = (c: any) => ({
 const dueStyle = (_c: any) => ({ color: 'var(--yellow)' })
 const overdueStyle = (_c: any) => ({ color: 'var(--red)', fontWeight: 600 })
 const updatedStyle = (c: any) => ({ color: c.comment })
+const pillStyle = (c: any) => ({
+  fontSize: 10,
+  color: c.blue,
+  background: c.bgHighlight,
+  border: `1px solid ${c.border}`,
+  borderRadius: 999,
+  padding: '1px 8px',
+  whiteSpace: 'nowrap' as const,
+  maxWidth: 120,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+})

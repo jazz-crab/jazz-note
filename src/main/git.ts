@@ -1,15 +1,12 @@
 import fs from 'fs'
 import { mkdir, writeFile, readFile } from 'fs/promises'
-import { existsSync, readFileSync } from 'fs'
-import { homedir } from 'os'
+import { existsSync } from 'fs'
 import { join } from 'path'
-import { Client } from 'ssh2'
 import git from 'isomorphic-git'
 import http from 'isomorphic-git/http/node'
-import type { SyncResult, GitCommitInfo, SshSettings } from '../shared/types'
-import { isValidSyncToken } from '../shared/syncConfig'
+import type { SyncResult, GitCommitInfo } from '../shared/types'
 
-export type { SyncResult, GitCommitInfo, SshSettings } from '../shared/types'
+export type { SyncResult, GitCommitInfo } from '../shared/types'
 
 const DEFAULT_BRANCH = 'main'
 const AUTHOR = { name: 'jazz-note', email: 'jazz-note@local' }
@@ -336,66 +333,4 @@ export async function restore(repoDir: string, relPath: string, hash: string): P
   await writeFile(fullPath, content, 'utf-8')
   await commitAll(repoDir, `restore ${relPath}`)
   return content
-}
-
-const DEFAULT_KEY_NAMES = ['id_ed25519_rentgen', 'id_ed25519', 'id_rsa', 'id_ecdsa']
-
-function resolvePrivateKey(keyPath?: string): string | Buffer | undefined {
-  if (keyPath) return readFileSync(keyPath.replace(/^~/, homedir()))
-  for (const name of DEFAULT_KEY_NAMES) {
-    const p = join(homedir(), '.ssh', name)
-    if (existsSync(p)) return readFileSync(p)
-  }
-  return undefined
-}
-
-function sshErrorText(err: unknown): string {
-  const code = (err as { code?: string })?.code
-  if (code === 'ENOTFOUND' || code === 'EHOSTUNREACH') return 'Не удалось подключиться к серверу'
-  if (code === 'ECONNREFUSED') return 'Сервер отклоняет SSH-подключение'
-  if (code === 'ETIMEDOUT') return 'Превышено время ожидания подключения'
-  if (code === 'ERR_INVALID_ARG_TYPE' || code === 'UNREACHABLE') return 'Не удалось прочитать SSH-ключ'
-  const message = (err as { message?: string })?.message
-  if (message?.includes('All configured authentication methods failed')) {
-    return 'Не удалось подключиться по SSH: проверьте ключ и пользователя'
-  }
-  return message || 'Неизвестная ошибка SSH'
-}
-
-export async function applySyncPassword(
-  ssh: SshSettings,
-  token: string
-): Promise<{ ok: boolean; error?: string }> {
-  if (!isValidSyncToken(token)) {
-    return { ok: false, error: 'Некорректный формат пароля' }
-  }
-  return new Promise((resolve) => {
-    const conn = new Client()
-    const done = (ok: boolean, error?: string) => {
-      conn.end()
-      resolve({ ok, error })
-    }
-    conn.on('ready', () => {
-      conn.exec(`sudo -n htpasswd -b /etc/nginx/htpasswd-git vault ${token}`, (err, stream) => {
-        if (err) return done(false, sshErrorText(err))
-        let errOut = ''
-        stream.on('close', (code: number) => {
-          if (code === 0) done(true)
-          else done(false, errOut.trim() || 'Ошибка применения пароля на сервере')
-        })
-        stream.stderr.on('data', (d) => (errOut += d.toString()))
-      })
-    })
-    conn.on('error', (err) => done(false, sshErrorText(err)))
-    const key = resolvePrivateKey(ssh.keyPath)
-    const connectOpts: import('ssh2').ConnectConfig = {
-      host: ssh.host,
-      port: ssh.port ?? 22,
-      username: ssh.user,
-    }
-    if (key) connectOpts.privateKey = key
-    else if (ssh.password) connectOpts.password = ssh.password
-    else return done(false, 'Не найден SSH-ключ: укажите путь к ключу или пароль')
-    conn.connect(connectOpts)
-  })
 }

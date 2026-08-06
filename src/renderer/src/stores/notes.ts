@@ -4,7 +4,7 @@ import { parseNote, serializeNote } from '../utils/frontmatter'
 import { useSettingsStore } from './settings'
 import { debounce } from '../utils/debounce'
 import { replaceFirstHeading } from '../utils/note'
-import { parentOf, moveFolderPath } from '../utils/folder'
+import { parentOf, moveFolderPath, leafName } from '../utils/folder'
 import { historyStore } from './history'
 
 const ID_DIGITS = 5
@@ -64,6 +64,7 @@ interface NotesState {
   deleteNote: (relPath: string) => Promise<void>
   handleExternalChange: (relPath: string) => void
   renameNote: (relPath: string, title: string) => Promise<void>
+  moveNote: (relPath: string, destFolder: string | null) => Promise<void>
   updateNoteMetaByPath: (relPath: string, patch: Partial<NoteMeta>) => Promise<void>
   setSidebarSelection: (sel: SidebarSelection) => void
   setSearchQuery: (q: string) => void
@@ -247,6 +248,18 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     if (!note) return
     const meta = { ...note.meta, ...patch }
     await window.jazz.writeFile(relPath, serializeNote(meta, note.body), notesPath)
+    await get().loadNotes()
+  },
+
+  moveNote: async (relPath: string, destFolder: string | null) => {
+    const { notesPath } = get()
+    const leaf = leafName(relPath)
+    const newPath = destFolder ? `${destFolder}/${leaf}` : leaf
+    if (newPath === relPath) return
+    await window.jazz.rename(relPath, newPath, notesPath)
+    if (get().currentNote?.relPath === relPath) {
+      set({ currentNote: { ...get().currentNote!, relPath: newPath } })
+    }
     await get().loadNotes()
   },
 

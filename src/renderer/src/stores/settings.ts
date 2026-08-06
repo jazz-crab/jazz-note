@@ -4,7 +4,7 @@ import type { PaletteId } from '../theme/themes'
 import type { Lang } from '../utils/i18n'
 import type { FontId } from '../utils/fonts'
 
-export const DEFAULT_SYNC_REMOTE = 'https://rentgen.su/git/jazz-notes.git'
+export const DEFAULT_SYNC_REMOTE = ''
 
 interface SettingsState {
   showSettings: boolean
@@ -17,9 +17,6 @@ interface SettingsState {
   syncRemote: string
   syncUser: string
   syncPass: string
-  sshHost: string
-  sshUser: string
-  sshKey: string
   toggleSettings: () => void
   openSettings: () => void
   closeSettings: () => void
@@ -32,9 +29,6 @@ interface SettingsState {
   setSyncRemote: (url: string) => void
   setSyncUser: (user: string) => void
   setSyncPass: (pass: string) => void
-  setSshHost: (host: string) => void
-  setSshUser: (user: string) => void
-  setSshKey: (key: string) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -50,9 +44,6 @@ export const useSettingsStore = create<SettingsState>()(
       syncRemote: DEFAULT_SYNC_REMOTE,
       syncUser: '',
       syncPass: '',
-      sshHost: 'rentgen.su',
-      sshUser: 'jc',
-      sshKey: '',
       toggleSettings: () => set((s) => ({ showSettings: !s.showSettings })),
       openSettings: () => set({ showSettings: true }),
       closeSettings: () => set({ showSettings: false }),
@@ -65,9 +56,6 @@ export const useSettingsStore = create<SettingsState>()(
       setSyncRemote: (syncRemote) => set({ syncRemote }),
       setSyncUser: (syncUser) => set({ syncUser }),
       setSyncPass: (syncPass) => set({ syncPass }),
-      setSshHost: (sshHost) => set({ sshHost }),
-      setSshUser: (sshUser) => set({ sshUser }),
-      setSshKey: (sshKey) => set({ sshKey }),
     }),
     {
       name: 'jazz-settings',
@@ -81,9 +69,6 @@ export const useSettingsStore = create<SettingsState>()(
         syncRemote: s.syncRemote,
         syncUser: s.syncUser,
         syncPass: s.syncPass,
-        sshHost: s.sshHost,
-        sshUser: s.sshUser,
-        sshKey: s.sshKey,
       }),
       merge: (persisted, current) => {
         const saved = { ...(persisted as Partial<SettingsState>) }

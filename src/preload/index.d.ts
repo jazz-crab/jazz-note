@@ -1,4 +1,4 @@
-import type { SyncResult, GitCommitInfo, GitAuth, SshSettings } from '../shared/types'
+import type { SyncResult, GitCommitInfo, GitAuth } from '../shared/types'
 
 export interface JazzAPI {
   getPath: () => Promise<string>
@@ -24,10 +24,6 @@ export interface JazzAPI {
   gitHistory: (repoDir: string, relPath: string, limit?: number) => Promise<GitCommitInfo[]>
   gitShow: (repoDir: string, relPath: string, hash: string) => Promise<string | null>
   gitRestore: (repoDir: string, relPath: string, hash: string) => Promise<string | null>
-  gitApplySyncPassword: (
-    ssh: SshSettings,
-    token: string
-  ) => Promise<{ ok: boolean; error?: string }>
   onNotesChanged: (cb: (relPath: string) => void) => () => void
 }
 

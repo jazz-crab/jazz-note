@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useSettingsStore, DEFAULT_SYNC_REMOTE } from '../stores/settings'
+import { useSettingsStore } from '../stores/settings'
 import { useSyncStore } from '../stores/sync'
 import { palettes } from '../theme/themes'
 import { fontOptions } from '../utils/fonts'
 import { useColors, useIsDark } from '../theme'
 import { t, langLabels, type Lang } from '../utils/i18n'
 import { useNotesStore } from '../stores/notes'
-import { generateSyncToken, decodeSyncConfig } from '../../../shared/syncConfig'
+import { decodeSyncConfig } from '../../../shared/syncConfig'
 import SyncShareDialog from './SyncShareDialog'
 import SyncScanDialog from './SyncScanDialog'
 
@@ -32,12 +32,6 @@ export default function SettingsDialog() {
   const setSyncUser = useSettingsStore((s) => s.setSyncUser)
   const syncPass = useSettingsStore((s) => s.syncPass)
   const setSyncPass = useSettingsStore((s) => s.setSyncPass)
-  const sshHost = useSettingsStore((s) => s.sshHost)
-  const setSshHost = useSettingsStore((s) => s.setSshHost)
-  const sshUser = useSettingsStore((s) => s.sshUser)
-  const setSshUser = useSettingsStore((s) => s.setSshUser)
-  const sshKey = useSettingsStore((s) => s.sshKey)
-  const setSshKey = useSettingsStore((s) => s.setSshKey)
   const syncNow = useSyncStore((s) => s.syncNow)
   const syncStatus = useSyncStore((s) => s.status)
   const loadNotes = useNotesStore((s) => s.loadNotes)
@@ -45,32 +39,13 @@ export default function SettingsDialog() {
   const [scanOpen, setScanOpen] = useState(false)
   const [importText, setImportText] = useState('')
   const [importError, setImportError] = useState(false)
-  const [generating, setGenerating] = useState(false)
-  const [genError, setGenError] = useState<string | null>(null)
+  const [tab, setTab] = useState<'main' | 'appearance' | 'sync'>('main')
 
   const handlePickFolder = async () => {
     const dir = await window.jazz.selectDirectory()
     if (!dir) return
     setNotesPath(dir)
     await loadNotes()
-  }
-
-  const handleGeneratePassword = async () => {
-    setGenerating(true)
-    setGenError(null)
-    const token = generateSyncToken()
-    const result = await window.jazz.gitApplySyncPassword(
-      { host: sshHost, port: 22, user: sshUser, keyPath: sshKey || undefined },
-      token
-    )
-    setGenerating(false)
-    if (result.ok) {
-      setSyncUser(syncUser || 'vault')
-      setSyncPass(token)
-      setShareOpen(true)
-    } else {
-      setGenError(result.error || '')
-    }
   }
 
   const handleScan = (config: { url: string; user: string; token: string }) => {
@@ -95,6 +70,7 @@ export default function SettingsDialog() {
 
   useEffect(() => {
     if (!showSettings) return
+    setTab('main')
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation()
@@ -118,197 +94,191 @@ export default function SettingsDialog() {
         </div>
 
         <div style={bodyStyle}>
-          <div style={toggleGroupStyle}>
-            <span style={toggleLabelStyle(isDark ? 'dark' : 'light')}>{t('dark.theme', lang)}</span>
-            <button style={switchTrackStyle(isDark)} onClick={toggleDark}>
-              <span style={switchThumbStyle(isDark)} />
-            </button>
-          </div>
-
-          <div style={toggleGroupStyle}>
-            <span style={toggleLabelStyle(isDark ? 'dark' : 'light')}>{t('show.countdown', lang)}</span>
-            <button style={switchTrackStyle(showCountdown)} onClick={() => setShowCountdown(!showCountdown)}>
-              <span style={switchThumbStyle(showCountdown)} />
-            </button>
-          </div>
-
-          <div style={groupStyle}>
-            <label style={labelStyle(colors)}>{t('color.scheme', lang)}</label>
-            <div style={themeListStyle}>
-              {palettes.map((p) => (
-                <button
-                  key={p.id}
-                  style={{
-                    ...themeBtnStyle(colors),
-                    ...(palette === p.id ? themeBtnActiveStyle(colors) : {}),
-                  }}
-                  onClick={() => setPalette(p.id)}
-                >
-                  <div style={swatchRowStyle}>
-                    {(['bg', 'red', 'green', 'yellow', 'blue', 'purple'] as const).map((k) => (
-                      <span
-                        key={k}
-                        style={{
-                          ...swatchStyle,
-                          background: isDark ? p.dark.colors[k] : p.light.colors[k],
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <span style={themeLabelStyle(colors)}>{p.label}</span>
-                  {palette === p.id && (
-                    <span style={currentBadgeStyle(colors)}>{'\u2713'}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={groupStyle}>
-            <label style={labelStyle(colors)}>{t('language', lang)}</label>
-            <select
-              style={selectStyle(colors)}
-              value={lang}
-              onChange={(e) => setLang(e.target.value as Lang)}
+          <div style={tabsStyle}>
+            <button
+              style={tabBtnStyle(colors, tab === 'main')}
+              onClick={() => setTab('main')}
             >
-              {(Object.keys(langLabels) as Lang[]).map((l) => (
-                <option key={l} value={l}>
-                  {langLabels[l]}
-                </option>
-              ))}
-            </select>
+              {t('settings.tab.main', lang)}
+            </button>
+            <button
+              style={tabBtnStyle(colors, tab === 'appearance')}
+              onClick={() => setTab('appearance')}
+            >
+              {t('settings.tab.appearance', lang)}
+            </button>
+            <button
+              style={tabBtnStyle(colors, tab === 'sync')}
+              onClick={() => setTab('sync')}
+            >
+              {t('settings.tab.sync', lang)}
+            </button>
           </div>
 
-          <div style={groupStyle}>
-            <label style={labelStyle(colors)}>{t('notes.folder', lang)}</label>
-            <div style={folderRowStyle}>
-              <span style={folderPathStyle(colors)}>
-                {notesPath || t('notes.folder.default', lang)}
-              </span>
-              <button style={folderBtnStyle(colors)} onClick={handlePickFolder}>
-                {t('choose.folder', lang)}
-              </button>
-            </div>
-          </div>
+          {tab === 'main' && (
+            <>
+              <div style={groupStyle}>
+                <label style={labelStyle(colors)}>{t('notes.folder', lang)}</label>
+                <div style={folderRowStyle}>
+                  <span style={folderPathStyle(colors)}>
+                    {notesPath || t('notes.folder.default', lang)}
+                  </span>
+                  <button style={folderBtnStyle(colors)} onClick={handlePickFolder}>
+                    {t('choose.folder', lang)}
+                  </button>
+                </div>
+              </div>
 
-          <div style={groupStyle}>
-            <label style={labelStyle(colors)}>{t('sync.server', lang)}</label>
-            <input
-              style={syncInputStyle(colors)}
-              value={syncRemote}
-              onChange={(e) => setSyncRemote(e.target.value)}
-              placeholder={DEFAULT_SYNC_REMOTE}
-              spellCheck={false}
-            />
-            <div style={hintStyle(colors)}>{t('sync.server.hint', lang)}</div>
-            <label style={labelStyle(colors)}>{t('sync.user', lang)}</label>
-            <input
-              style={syncInputStyle(colors)}
-              value={syncUser}
-              onChange={(e) => setSyncUser(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-            />
-            <div style={hintStyle(colors)}>{t('sync.user.hint', lang)}</div>
-            <label style={labelStyle(colors)}>{t('sync.password', lang)}</label>
-            <input
-              style={syncInputStyle(colors)}
-              type="password"
-              value={syncPass}
-              onChange={(e) => setSyncPass(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-            />
-            <div style={hintStyle(colors)}>{t('sync.password.hint', lang)}</div>
-            <div style={btnRowStyle}>
-              <button
-                style={actionBtnStyle(colors)}
-                onClick={() => void handleGeneratePassword()}
-                disabled={generating}
-              >
-                {generating ? t('sync.generating', lang) : t('sync.gen', lang)}
-              </button>
-              <button style={actionBtnStyle(colors)} onClick={() => setShareOpen(true)}>
-                {t('sync.share', lang)}
-              </button>
-              <button style={actionBtnStyle(colors)} onClick={() => setScanOpen(true)}>
-                {t('sync.scan', lang)}
-              </button>
-            </div>
-            <div style={hintStyle(colors)}>{t('sync.gen.hint', lang)}</div>
-            {genError && <div style={errorTextStyle(colors)}>{t('sync.gen.failed', lang).replace('{error}', genError)}</div>}
-            <div style={syncRowStyle}>
-              <button style={syncBtnStyle(colors)} onClick={() => void syncNow()}>
-                {syncStatus === 'syncing' ? t('sync.syncing', lang) : t('sync.now', lang)}
-              </button>
-            </div>
-            <div style={importRowStyle}>
+              <div style={groupStyle}>
+                <label style={labelStyle(colors)}>{t('language', lang)}</label>
+                <select
+                  style={selectStyle(colors)}
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value as Lang)}
+                >
+                  {(Object.keys(langLabels) as Lang[]).map((l) => (
+                    <option key={l} value={l}>
+                      {langLabels[l]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={toggleGroupStyle}>
+                <span style={toggleLabelStyle(isDark ? 'dark' : 'light')}>{t('show.countdown', lang)}</span>
+                <button style={switchTrackStyle(showCountdown)} onClick={() => setShowCountdown(!showCountdown)}>
+                  <span style={switchThumbStyle(showCountdown)} />
+                </button>
+              </div>
+            </>
+          )}
+
+          {tab === 'appearance' && (
+            <>
+              <div style={toggleGroupStyle}>
+                <span style={toggleLabelStyle(isDark ? 'dark' : 'light')}>{t('dark.theme', lang)}</span>
+                <button style={switchTrackStyle(isDark)} onClick={toggleDark}>
+                  <span style={switchThumbStyle(isDark)} />
+                </button>
+              </div>
+
+              <div style={groupStyle}>
+                <label style={labelStyle(colors)}>{t('color.scheme', lang)}</label>
+                <div style={themeListStyle}>
+                  {palettes.map((p) => (
+                    <button
+                      key={p.id}
+                      style={{
+                        ...themeBtnStyle(colors),
+                        ...(palette === p.id ? themeBtnActiveStyle(colors) : {}),
+                      }}
+                      onClick={() => setPalette(p.id)}
+                    >
+                      <div style={swatchRowStyle}>
+                        {(['bg', 'red', 'green', 'yellow', 'blue', 'purple'] as const).map((k) => (
+                          <span
+                            key={k}
+                            style={{
+                              ...swatchStyle,
+                              background: isDark ? p.dark.colors[k] : p.light.colors[k],
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span style={themeLabelStyle(colors)}>{p.label}</span>
+                      {palette === p.id && (
+                        <span style={currentBadgeStyle(colors)}>{'\u2713'}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={groupStyle}>
+                <label style={labelStyle(colors)}>{t('font', lang)}</label>
+                <div style={fontListStyle}>
+                  {fontOptions.map((f) => (
+                    <button
+                      key={f.id}
+                      style={{
+                        ...fontBtnStyle(colors, f),
+                        ...(font === f.id ? fontBtnActiveStyle(colors) : {}),
+                      }}
+                      onClick={() => setFont(f.id)}
+                    >
+                      <span style={{ fontFamily: f.family, color: f.color }}>{f.label}</span>
+                      {font === f.id && (
+                        <span style={fontCheckStyle(colors)}>{'\u2713'}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === 'sync' && (
+            <div style={groupStyle}>
+              <label style={labelStyle(colors)}>{t('sync.server', lang)}</label>
               <input
                 style={syncInputStyle(colors)}
-                value={importText}
-                onChange={(e) => {
-                  setImportText(e.target.value)
-                  setImportError(false)
-                }}
-                placeholder={t('sync.import.placeholder', lang)}
+                value={syncRemote}
+                onChange={(e) => setSyncRemote(e.target.value)}
+                placeholder={t('sync.server.placeholder', lang)}
                 spellCheck={false}
               />
-              <button style={importBtnStyle(colors)} onClick={handleImport}>
-                {t('sync.import.apply', lang)}
-              </button>
-            </div>
-            <div style={hintStyle(colors)}>{t('sync.import.label', lang)}</div>
-            {importError && <div style={errorTextStyle(colors)}>{t('sync.import.invalid', lang)}</div>}
-            <details style={sshDetailsStyle(colors)}>
-              <summary style={sshSummaryStyle(colors)}>{t('sync.ssh', lang)}</summary>
-              <div style={sshFieldsStyle}>
-                <label style={labelStyle(colors)}>{t('sync.ssh.host', lang)}</label>
-                <input
-                  style={syncInputStyle(colors)}
-                  value={sshHost}
-                  onChange={(e) => setSshHost(e.target.value)}
-                  spellCheck={false}
-                />
-                <label style={labelStyle(colors)}>{t('sync.ssh.user', lang)}</label>
-                <input
-                  style={syncInputStyle(colors)}
-                  value={sshUser}
-                  onChange={(e) => setSshUser(e.target.value)}
-                  spellCheck={false}
-                />
-                <label style={labelStyle(colors)}>{t('sync.ssh.key', lang)}</label>
-                <input
-                  style={syncInputStyle(colors)}
-                  value={sshKey}
-                  onChange={(e) => setSshKey(e.target.value)}
-                  placeholder="~/.ssh/id_ed25519"
-                  spellCheck={false}
-                />
-                <div style={hintStyle(colors)}>{t('sync.ssh.key.hint', lang)}</div>
-              </div>
-            </details>
-          </div>
-
-          <div style={groupStyle}>
-            <label style={labelStyle(colors)}>{t('font', lang)}</label>
-            <div style={fontListStyle}>
-              {fontOptions.map((f) => (
-                <button
-                  key={f.id}
-                  style={{
-                    ...fontBtnStyle(colors, f),
-                    ...(font === f.id ? fontBtnActiveStyle(colors) : {}),
-                  }}
-                  onClick={() => setFont(f.id)}
-                >
-                  <span style={{ fontFamily: f.family, color: f.color }}>{f.label}</span>
-                  {font === f.id && (
-                    <span style={fontCheckStyle(colors)}>{'\u2713'}</span>
-                  )}
+              <div style={hintStyle(colors)}>{t('sync.server.hint', lang)}</div>
+              <label style={labelStyle(colors)}>{t('sync.user', lang)}</label>
+              <input
+                style={syncInputStyle(colors)}
+                value={syncUser}
+                onChange={(e) => setSyncUser(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+              />
+              <div style={hintStyle(colors)}>{t('sync.user.hint', lang)}</div>
+              <label style={labelStyle(colors)}>{t('sync.password', lang)}</label>
+              <input
+                style={syncInputStyle(colors)}
+                type="password"
+                value={syncPass}
+                onChange={(e) => setSyncPass(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+              />
+              <div style={hintStyle(colors)}>{t('sync.password.hint', lang)}</div>
+              <div style={btnRowStyle}>
+                <button style={actionBtnStyle(colors)} onClick={() => setShareOpen(true)}>
+                  {t('sync.share', lang)}
                 </button>
-              ))}
+                <button style={actionBtnStyle(colors)} onClick={() => setScanOpen(true)}>
+                  {t('sync.scan', lang)}
+                </button>
+              </div>
+              <div style={syncRowStyle}>
+                <button style={syncBtnStyle(colors)} onClick={() => void syncNow()}>
+                  {syncStatus === 'syncing' ? t('sync.syncing', lang) : t('sync.now', lang)}
+                </button>
+              </div>
+              <div style={importRowStyle}>
+                <input
+                  style={syncInputStyle(colors)}
+                  value={importText}
+                  onChange={(e) => {
+                    setImportText(e.target.value)
+                    setImportError(false)
+                  }}
+                  placeholder={t('sync.import.placeholder', lang)}
+                  spellCheck={false}
+                />
+                <button style={importBtnStyle(colors)} onClick={handleImport}>
+                  {t('sync.import.apply', lang)}
+                </button>
+              </div>
+              <div style={hintStyle(colors)}>{t('sync.import.label', lang)}</div>
+              {importError && <div style={errorTextStyle(colors)}>{t('sync.import.invalid', lang)}</div>}
             </div>
-          </div>
+          )}
         </div>
       </div>
       {shareOpen && <SyncShareDialog onClose={() => setShareOpen(false)} />}
@@ -357,6 +327,23 @@ const bodyStyle: React.CSSProperties = {
   flexDirection: 'column',
   gap: 20,
 }
+const tabsStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: 6,
+  borderBottom: '1px solid var(--border)',
+  paddingBottom: 12,
+}
+const tabBtnStyle = (c: any, active: boolean) => ({
+  padding: '6px 14px',
+  border: 'none',
+  borderRadius: 6,
+  color: active ? c.blue : c.comment,
+  fontSize: 13,
+  fontWeight: active ? 700 : 500,
+  cursor: 'pointer',
+  background: active ? 'var(--hover)' : 'transparent',
+  transition: 'color 0.15s, background 0.15s',
+})
 const toggleGroupStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -570,22 +557,6 @@ const errorTextStyle = (c: any) => ({
   fontSize: 12,
   color: c.red,
 })
-const sshDetailsStyle = (c: any) => ({
-  borderTop: `1px solid ${c.border}`,
-  paddingTop: 8,
-})
-const sshSummaryStyle = (c: any) => ({
-  fontSize: 12,
-  color: c.blue,
-  cursor: 'pointer',
-  userSelect: 'none' as const,
-})
-const sshFieldsStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 6,
-  paddingTop: 8,
-}
 const syncBtnStyle = (c: any) => ({
   padding: '6px 12px',
   background: c.bg,

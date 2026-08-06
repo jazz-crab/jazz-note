@@ -4,7 +4,7 @@ import { useColors } from '../theme'
 import { t } from '../utils/i18n'
 import { useSettingsStore } from '../stores/settings'
 import { useSyncStore } from '../stores/sync'
-import { isInFolder } from '../utils/folder'
+import { isInFolder, leafName } from '../utils/folder'
 import Sidebar from '../components/Sidebar'
 import NoteCard from '../components/NoteCard'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -85,13 +85,16 @@ export default function NoteList({ onSelectNote }: Props) {
   const deleteNote = useNotesStore((s) => s.deleteNote)
   const createNote = useNotesStore((s) => s.createNote)
   const renameNote = useNotesStore((s) => s.renameNote)
+  const moveNote = useNotesStore((s) => s.moveNote)
   const updateNoteMetaByPath = useNotesStore((s) => s.updateNoteMetaByPath)
+  const folders = useNotesStore((s) => s.folders)
 
   const [newTitle, setNewTitle] = useState('')
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
   const [createdRelPath, setCreatedRelPath] = useState<string | null>(null)
   const [menu, setMenu] = useState<{ x: number; y: number; note: Note } | null>(null)
   const [noteAction, setNoteAction] = useState<NoteAction>(null)
+  const [movingNote, setMovingNote] = useState<Note | null>(null)
 
   const handleDeleted = (relPath: string) => {
     deleteNote(relPath)
@@ -276,11 +279,40 @@ export default function NoteList({ onSelectNote }: Props) {
           onClose={() => setMenu(null)}
           items={[
             { label: t('context.rename', lang), onClick: () => setNoteAction({ note: menu.note, action: 'rename' }) },
+            { label: t('context.move.note', lang), onClick: () => setMovingNote(menu.note) },
             { label: t('context.change.date', lang), onClick: () => setNoteAction({ note: menu.note, action: 'date' }) },
             { label: t('context.change.color', lang), onClick: () => setNoteAction({ note: menu.note, action: 'color' }) },
             { label: t('context.delete', lang), onClick: () => setNoteAction({ note: menu.note, action: 'delete' }), danger: true },
           ]}
         />
+      )}
+
+      {movingNote && (
+        <Modal title={t('move.note', lang)} onClose={() => setMovingNote(null)}>
+          <div style={moveListStyle}>
+            <button
+              style={moveTargetStyle(colors)}
+              onClick={() => {
+                void moveNote(movingNote.relPath, null)
+                setMovingNote(null)
+              }}
+            >
+              {"\u2514"} {t('move.to.root', lang)}
+            </button>
+            {[...folders].sort().map((folder) => (
+              <button
+                key={folder}
+                style={moveTargetStyle(colors)}
+                onClick={() => {
+                  void moveNote(movingNote.relPath, folder)
+                  setMovingNote(null)
+                }}
+              >
+                {"\u2514"} {leafName(folder)}
+              </button>
+            ))}
+          </div>
+        </Modal>
       )}
 
       {noteAction?.action === 'rename' && (
@@ -423,4 +455,24 @@ const createBtnStyle = (c: any) => ({
   borderRadius: 6,
   fontWeight: 700,
   fontSize: 16,
+})
+const moveListStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+  maxHeight: '50vh',
+  overflowY: 'auto',
+}
+const moveTargetStyle = (c: any): React.CSSProperties => ({
+  textAlign: 'left' as const,
+  padding: '8px 12px',
+  borderRadius: 6,
+  fontSize: 13,
+  color: c.fg,
+  background: c.bgAlt,
+  border: `1px solid ${c.border}`,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap' as const,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 })

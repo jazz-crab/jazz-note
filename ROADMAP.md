@@ -30,11 +30,11 @@ Legend: `[x] done · [ ] next · [~] deferred`
 - [x] **Git-backed vault** — the notes folder is initialized as a git repository; every autosave (400 ms debounce) and settings change become commits.
 - [x] **Per-note version history** — a dialog in the editor lists versions (hash, date, message) with preview and restore via a new commit.
 - [x] **Undo/redo to the first version** — the undo stack is seeded from the git history (up to 500 versions) when a note is opened.
-- [x] **Server sync (smart HTTP)** — a bare repository served over HTTPS (`https://rentgen.su/git/jazz-notes.git`), auto-sync at startup, a manual sync button, non-conflicting changes merge automatically.
+- [x] **Server sync (smart HTTP)** — a bare repository served over HTTPS, auto-sync at startup, a manual sync button, non-conflicting changes merge automatically.
 - [x] **No system git required** — all git operations run in-process on a pure-JS engine (isomorphic-git); works on any device without installing git.
 - [x] **Sync indicator** — green/yellow/red/orange dot in the top-right corner with details on click.
 - [x] **Conflict resolution** — pick local or remote version per conflicting file with preview.
-- [x] **Multi-device onboarding** — generate a 12-character token in Settings, apply it to the server over SSH (embedded ssh2), and share via QR code or a copyable string; import by scanning or pasting on another device.
+- [x] **Multi-device onboarding** — share the server URL, login and token as a QR code or a copyable string; import by scanning or pasting on another device.
 
 ## Later
 

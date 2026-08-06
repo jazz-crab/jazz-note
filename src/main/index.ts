@@ -11,11 +11,9 @@ import {
   history as gitHistory,
   show as gitShow,
   restore as gitRestore,
-  applySyncPassword,
   type SyncResult,
   type GitCommitInfo,
   type GitAuth,
-  type SshSettings,
 } from './git'
 
 let mainWindow: BrowserWindow | null = null
@@ -233,13 +231,6 @@ function registerIpc() {
   ipcMain.handle('git:restore', async (_event, repoDir: string, relPath: string, hash: string): Promise<string | null> => {
     return gitRestore(repoDir, relPath, hash)
   })
-
-  ipcMain.handle(
-    'git:applySyncPassword',
-    async (_event, ssh: SshSettings, token: string): Promise<{ ok: boolean; error?: string }> => {
-      return applySyncPassword(ssh, token)
-    }
-  )
 }
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
