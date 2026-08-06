@@ -8,7 +8,7 @@ Built with Electron + React + TypeScript on top of CodeMirror 6. Notes live as p
 
 Inspired by [Obsidian](https://obsidian.md): a plain-Markdown vault with inline live preview, designed to feel familiar to Obsidian users.
 
-**Status:** early stage (v0.1.0), already usable for daily notes.
+**Status:** early stage, already usable for daily notes.
 
 ## Features
 
