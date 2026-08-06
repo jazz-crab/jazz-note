@@ -11,6 +11,7 @@ interface SettingsState {
   lang: Lang
   font: FontId
   notesPath: string
+  showCountdown: boolean
   toggleSettings: () => void
   openSettings: () => void
   closeSettings: () => void
@@ -19,6 +20,7 @@ interface SettingsState {
   setLang: (lang: Lang) => void
   setFont: (font: FontId) => void
   setNotesPath: (path: string) => void
+  setShowCountdown: (show: boolean) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -30,6 +32,7 @@ export const useSettingsStore = create<SettingsState>()(
       lang: 'ru',
       font: 'neon',
       notesPath: '',
+      showCountdown: true,
       toggleSettings: () => set((s) => ({ showSettings: !s.showSettings })),
       openSettings: () => set({ showSettings: true }),
       closeSettings: () => set({ showSettings: false }),
@@ -38,10 +41,18 @@ export const useSettingsStore = create<SettingsState>()(
       setLang: (lang) => set({ lang }),
       setFont: (font) => set({ font }),
       setNotesPath: (notesPath) => set({ notesPath }),
+      setShowCountdown: (showCountdown) => set({ showCountdown }),
     }),
     {
       name: 'jazz-settings',
-      partialize: (s) => ({ palette: s.palette, isDark: s.isDark, lang: s.lang, font: s.font, notesPath: s.notesPath }),
+      partialize: (s) => ({
+        palette: s.palette,
+        isDark: s.isDark,
+        lang: s.lang,
+        font: s.font,
+        notesPath: s.notesPath,
+        showCountdown: s.showCountdown,
+      }),
     }
   )
 )

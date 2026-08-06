@@ -26,7 +26,7 @@ Inspired by [Obsidian](https://obsidian.md): a plain-Markdown vault with inline 
 - **Filters** — All / Today / Tomorrow / This week / Later / No date
 - **Sorting** — by last updated / created / due date
 - **Metadata** — title, due date, color, auto-assigned ID, created/updated timestamps
-- **Countdown to the next due note** — always visible at the top of the main screen, ticks in real time
+- **Countdown to the next due note** — always visible at the top of the main screen, ticks in real time; can be hidden (the × on the bar or a toggle in Settings), preference is remembered
 
 ### Reliability
 - **Debounced autosave** (1 s) with a live save-status indicator (idle → dirty → saving → saved/error)

@@ -10,6 +10,8 @@ export default function NextDueTimer() {
   const colors = useColors()
   const lang = useSettingsStore((s) => s.lang)
   const notes = useNotesStore((s) => s.notes)
+  const showCountdown = useSettingsStore((s) => s.showCountdown)
+  const setShowCountdown = useSettingsStore((s) => s.setShowCountdown)
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -18,13 +20,16 @@ export default function NextDueTimer() {
   }, [])
 
   const upcoming = nextUpcomingDue(notes, now)
-  if (!upcoming) return null
+  if (!upcoming || !showCountdown) return null
 
   return (
     <div style={pill(colors)}>
       <span style={labelStyle(colors)}>{t('next.due', lang)}</span>
       <span style={timeStyle(colors)}>{formatCountdown(upcoming.due - now, lang)}</span>
       <span style={titleStyle(colors)}>{upcoming.note.title}</span>
+      <button style={hideBtn(colors)} onClick={() => setShowCountdown(false)} title={t('hide.countdown', lang)}>
+        ×
+      </button>
     </div>
   )
 }
@@ -56,4 +61,11 @@ const titleStyle = (c: any): React.CSSProperties => ({
   whiteSpace: 'nowrap' as const,
   minWidth: 0,
   flex: 1,
+})
+const hideBtn = (c: any): React.CSSProperties => ({
+  color: c.comment,
+  fontSize: 16,
+  padding: '0 2px',
+  opacity: 0.5,
+  flexShrink: 0,
 })

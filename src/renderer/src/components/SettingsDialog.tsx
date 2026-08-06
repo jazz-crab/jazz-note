@@ -20,6 +20,8 @@ export default function SettingsDialog() {
   const setFont = useSettingsStore((s) => s.setFont)
   const notesPath = useSettingsStore((s) => s.notesPath)
   const setNotesPath = useSettingsStore((s) => s.setNotesPath)
+  const showCountdown = useSettingsStore((s) => s.showCountdown)
+  const setShowCountdown = useSettingsStore((s) => s.setShowCountdown)
   const loadNotes = useNotesStore((s) => s.loadNotes)
 
   const handlePickFolder = async () => {
@@ -58,6 +60,13 @@ export default function SettingsDialog() {
             <span style={toggleLabelStyle(isDark ? 'dark' : 'light')}>{t('dark.theme', lang)}</span>
             <button style={switchTrackStyle(isDark)} onClick={toggleDark}>
               <span style={switchThumbStyle(isDark)} />
+            </button>
+          </div>
+
+          <div style={toggleGroupStyle}>
+            <span style={toggleLabelStyle(isDark ? 'dark' : 'light')}>{t('show.countdown', lang)}</span>
+            <button style={switchTrackStyle(showCountdown)} onClick={() => setShowCountdown(!showCountdown)}>
+              <span style={switchThumbStyle(showCountdown)} />
             </button>
           </div>
 

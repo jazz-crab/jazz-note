@@ -77,6 +77,8 @@ const ru: Record<string, string> = {
   'notes.folder.default': 'По умолчанию',
   'choose.folder': 'Выбрать папку...',
   'next.due': 'До следующего дела:',
+  'show.countdown': 'Показывать отсчёт',
+  'hide.countdown': 'Скрыть отсчёт',
 }
 
 const en: Record<string, string> = {
@@ -151,6 +153,8 @@ const en: Record<string, string> = {
   'notes.folder.default': 'Default',
   'choose.folder': 'Choose folder...',
   'next.due': 'Next due:',
+  'show.countdown': 'Show countdown',
+  'hide.countdown': 'Hide countdown',
 }
 
 const strings: Record<Lang, Record<string, string>> = { ru, en }
