@@ -153,6 +153,10 @@ const en: Record<string, string> = {
 
 const strings: Record<Lang, Record<string, string>> = { ru, en }
 
+export function translationKeys(lang: Lang): string[] {
+  return Object.keys(strings[lang])
+}
+
 export function t(key: string, lang: Lang = 'ru'): string {
   return strings[lang]?.[key] ?? strings.ru[key] ?? key
 }

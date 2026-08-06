@@ -21,7 +21,7 @@ Legend: `[x] done · [ ] next · [~] deferred`
 - [ ] **Note reminders/alarms** — notes already carry a `due` date; surface them as system notifications and integrate with the OS (Task Scheduler on Windows, calendar/alarm on Android, etc.).
 
 ### Engineering
-- [ ] **Tests + CI** — unit tests for the frontmatter parser, i18n, and utilities; a basic CI workflow.
+- [x] **Tests + CI** — unit tests for the frontmatter parser, i18n, color, debounce, and fonts utilities (Vitest); a GitHub Actions workflow runs tests and the build on every push/PR.
 
 ## Later
 

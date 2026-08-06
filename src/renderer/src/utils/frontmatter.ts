@@ -78,7 +78,7 @@ export function parseNote(raw: string): NoteData {
 
   if (!meta.title) {
     const firstLine = content.split('\n')[0] || ''
-    meta.title = firstLine.replace(/^#\s*/, '').trim() || 'Untitled'
+    meta.title = firstLine.replace(/^#+\s*/, '').trim() || 'Untitled'
   }
 
   return { meta, content, raw }

@@ -31,6 +31,7 @@ Inspired by [Obsidian](https://obsidian.md): a plain-Markdown vault with inline 
 - **Debounced autosave** (1 s) with a live save-status indicator (idle → dirty → saving → saved/error)
 - **File watcher** (chokidar) — external edits are picked up automatically
 - **Single-instance app**, context-isolated preload bridge, no menu chrome
+- **Unit tests (Vitest) + CI** — GitHub Actions runs tests and builds on every push
 
 ### Appearance
 - **3 palettes** — TokyoNight, Everforest, Catppuccin — each with **dark and light** variants
@@ -60,6 +61,12 @@ Production build and packaging (AppImage + deb on Linux):
 ```bash
 npm run build
 npm run dist
+```
+
+Unit tests (Vitest):
+
+```bash
+npm run test
 ```
 
 ## How notes are stored
