@@ -6,6 +6,7 @@ import { useSettingsStore } from '../stores/settings'
 import Sidebar from '../components/Sidebar'
 import NoteCard from '../components/NoteCard'
 import ConfirmDialog from '../components/ConfirmDialog'
+import NextDueTimer from '../components/NextDueTimer'
 import type React from 'react'
 
 interface Props {
@@ -176,6 +177,7 @@ export default function NoteList({ onSelectNote }: Props) {
       <Sidebar />
       <div style={mainStyle}>
         <div style={topBarStyle}>
+          <NextDueTimer />
           <div style={{ position: 'relative' as const }}>
             <input
               style={searchStyle(colors)}
