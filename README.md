@@ -20,12 +20,13 @@ Inspired by [Obsidian](https://obsidian.md): a plain-Markdown vault with inline 
 
 ### Notes
 - **Plain Markdown files** in a vault folder (customizable — pick any folder in Settings; defaults to `~/Documents/jazz-notes`, auto-created)
-- **Full CRUD** — create, edit, delete notes and folders; rename folders; delete non-empty folders
-- **New note goes to the selected folder** — when a folder is active in the sidebar, new notes are created inside it
+- **Full CRUD** — create, edit, delete notes and folders; **nested folders** at any depth
+- **Right-click menu** — on a note: rename, change date/color, delete; on a folder: rename, move (into another folder or to root), delete
+- **New note goes to the selected folder** — when a folder is active in the sidebar, new notes are created inside it; a new folder is created inside the selected one too
 - **Search** — full-text over title and body, case-insensitive
 - **Filters** — All / Today / Tomorrow / This week / Later / No date
 - **Sorting** — by last updated / created / due date
-- **Metadata** — title, due date, color, auto-assigned ID, created/updated timestamps
+- **Metadata** — title, due date, color, auto-assigned ID, created/updated timestamps; the note color highlights the card in the list and the **editor background/text**
 - **Countdown to the next due note** — always visible at the top of the main screen, ticks in real time; can be hidden (the × on the bar or a toggle in Settings), preference is remembered
 
 ### Reliability

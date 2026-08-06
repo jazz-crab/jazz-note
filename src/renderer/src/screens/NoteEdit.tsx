@@ -6,6 +6,7 @@ import type { NoteMeta } from '../utils/frontmatter'
 import { mixHex } from '../utils/color'
 import { debounce } from '../utils/debounce'
 import { t, localeOf } from '../utils/i18n'
+import { replaceFirstHeading } from '../utils/note'
 import NoteEditor from '../components/NoteEditor'
 import DatePicker from '../components/DatePicker'
 import ColorPicker from '../components/ColorPicker'
@@ -16,15 +17,6 @@ import UndoToast from '../components/UndoToast'
 interface Props {
   relPath: string
   onBack: () => void
-}
-
-function replaceFirstHeading(body: string, title: string): string {
-  const lines = body.split('\n')
-  const idx = lines.findIndex((l) => l.trim() !== '')
-  if (idx !== -1 && /^#+\s+/.test(lines[idx].trim())) {
-    lines[idx] = lines[idx].replace(/^(#+\s+).*$/, (_m, prefix: string) => prefix + title)
-  }
-  return lines.join('\n')
 }
 
 export default function NoteEdit({ relPath, onBack }: Props) {
@@ -139,7 +131,8 @@ export default function NoteEdit({ relPath, onBack }: Props) {
   }
 
   const noteColor = currentNote.meta.color ? noteColorMap[currentNote.meta.color] : null
-  const editorTint = noteColor ? mixHex(noteColor, colors.bg, 0.08) : undefined
+  const editorTint = noteColor ? mixHex(noteColor, colors.bg, 0.2) : undefined
+  const editorText = noteColor ? mixHex(noteColor, colors.fg, 0.45) : undefined
   const due = currentNote.meta.due ? new Date(currentNote.meta.due) : null
   const isOverdue = due && due < new Date()
 
@@ -173,6 +166,7 @@ export default function NoteEdit({ relPath, onBack }: Props) {
         style={{
           ...styles.editorWrap,
           ...(editorTint ? { '--atomic-editor-bg': editorTint } as any : {}),
+          ...(editorText ? { '--atomic-editor-fg': editorText } as any : {}),
         }}
       >
         <NoteEditor

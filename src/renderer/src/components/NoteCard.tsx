@@ -9,10 +9,10 @@ interface Props {
   note: Note
   isActive: boolean
   onClick: () => void
-  onDelete: () => void
+  onContextMenu?: (e: React.MouseEvent) => void
 }
 
-export default function NoteCard({ note, isActive, onClick, onDelete }: Props) {
+export default function NoteCard({ note, isActive, onClick, onContextMenu }: Props) {
   const colors = useColors()
   const lang = useSettingsStore((s) => s.lang)
   const noteColorMap = useNoteColors()
@@ -30,6 +30,7 @@ export default function NoteCard({ note, isActive, onClick, onDelete }: Props) {
         ...(isActive ? cardActive(colors) : {}),
       }}
       onClick={onClick}
+      onContextMenu={onContextMenu}
     >
       <div style={styles.body}>
         <div style={styles.header}>
@@ -37,7 +38,6 @@ export default function NoteCard({ note, isActive, onClick, onDelete }: Props) {
             <span style={{ ...colorDot(noteColor) }} />
           )}
           <span style={titleStyle(colors)}>{note.title || t('untitled', lang)}</span>
-          <button style={deleteBtn(colors)} onClick={(e) => { e.stopPropagation(); onDelete() }}>×</button>
         </div>
         {preview && <div style={previewStyle(colors)}>{preview}</div>}
         <div style={styles.footer}>
@@ -88,13 +88,6 @@ const titleStyle = (c: any) => ({
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap' as const,
   flex: 1,
-})
-const deleteBtn = (c: any) => ({
-  color: c.comment,
-  fontSize: 18,
-  padding: '0 2px',
-  opacity: 0.5,
-  flexShrink: 0,
 })
 const previewStyle = (c: any) => ({
   fontSize: 12,

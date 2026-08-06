@@ -79,6 +79,14 @@ const ru: Record<string, string> = {
   'next.due': 'До следующего дела:',
   'show.countdown': 'Показывать отсчёт',
   'hide.countdown': 'Скрыть отсчёт',
+  'context.rename': 'Переименовать',
+  'context.delete': 'Удалить',
+  'context.move': 'Переместить',
+  'context.change.date': 'Изменить дату',
+  'context.change.color': 'Изменить цвет',
+  'rename.note': 'Новое название заметки:',
+  'move.folder': 'Переместить папку',
+  'move.to.root': 'В корень',
 }
 
 const en: Record<string, string> = {
@@ -155,6 +163,14 @@ const en: Record<string, string> = {
   'next.due': 'Next due:',
   'show.countdown': 'Show countdown',
   'hide.countdown': 'Hide countdown',
+  'context.rename': 'Rename',
+  'context.delete': 'Delete',
+  'context.move': 'Move',
+  'context.change.date': 'Change date',
+  'context.change.color': 'Change color',
+  'rename.note': 'New note name:',
+  'move.folder': 'Move folder',
+  'move.to.root': 'To root',
 }
 
 const strings: Record<Lang, Record<string, string>> = { ru, en }

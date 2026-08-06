@@ -3,8 +3,11 @@ import { useNotesStore, type SidebarSelection } from '../stores/notes'
 import { useSettingsStore } from '../stores/settings'
 import { useColors } from '../theme'
 import { t } from '../utils/i18n'
+import { leafName, depthOf, isSelfOrChild } from '../utils/folder'
 import PromptDialog from './PromptDialog'
 import ConfirmDialog from './ConfirmDialog'
+import ContextMenu from './ContextMenu'
+import Modal from './Modal'
 
 export default function Sidebar() {
   const colors = useColors()
@@ -14,11 +17,13 @@ export default function Sidebar() {
   const setSidebarSelection = useNotesStore((s) => s.setSidebarSelection)
   const createFolder = useNotesStore((s) => s.createFolder)
   const renameFolder = useNotesStore((s) => s.renameFolder)
+  const moveFolder = useNotesStore((s) => s.moveFolder)
   const deleteFolder = useNotesStore((s) => s.deleteFolder)
   const openSettings = useSettingsStore((s) => s.openSettings)
   const [showNewFolder, setShowNewFolder] = useState(false)
-  const [hoverFolder, setHoverFolder] = useState<string | null>(null)
+  const [menu, setMenu] = useState<{ x: number; y: number; folder: string } | null>(null)
   const [renamingFolder, setRenamingFolder] = useState<string | null>(null)
+  const [movingFolder, setMovingFolder] = useState<string | null>(null)
   const [deletingFolder, setDeletingFolder] = useState<string | null>(null)
 
   const filterItems: Array<{ type: SidebarSelection; label: string }> = [
@@ -48,6 +53,14 @@ export default function Sidebar() {
     setRenamingFolder(null)
   }
 
+  const sortedFolders = [...folders].sort()
+
+  const moveTargets = movingFolder
+    ? folders
+        .filter((f) => !isSelfOrChild(f, movingFolder))
+        .sort()
+    : []
+
   return (
     <div style={container(colors)}>
       <div style={title(colors)}>JazzNote</div>
@@ -74,7 +87,7 @@ export default function Sidebar() {
           <span>{t('folders', lang)}</span>
           <button style={addBtn(colors)} onClick={() => setShowNewFolder(true)}>+</button>
         </div>
-        {folders.map((folder) => (
+        {sortedFolders.map((folder) => (
           <div
             key={folder}
             style={{
@@ -82,28 +95,14 @@ export default function Sidebar() {
               ...(isSelected({ type: 'folder', path: folder }) ? itemSelectedStyle(colors) : {}),
             }}
             onClick={() => setSidebarSelection({ type: 'folder', path: folder })}
-            onMouseEnter={() => setHoverFolder(folder)}
-            onMouseLeave={() => setHoverFolder(null)}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              setMenu({ x: e.clientX, y: e.clientY, folder })
+            }}
           >
-            <span style={folderNameStyle}>{"\u2514"} {folder}</span>
-            {hoverFolder === folder && (
-              <span style={folderActionsStyle}>
-                <button
-                  style={folderActionBtn(colors)}
-                  title={t('rename', lang)}
-                  onClick={(e) => { e.stopPropagation(); setRenamingFolder(folder) }}
-                >
-                  {'\u270E'}
-                </button>
-                <button
-                  style={folderActionBtn(colors)}
-                  title={t('delete', lang)}
-                  onClick={(e) => { e.stopPropagation(); setDeletingFolder(folder) }}
-                >
-                  {'\u2715'}
-                </button>
-              </span>
-            )}
+            <span style={{ ...folderNameStyle, paddingLeft: depthOf(folder) * 14 }}>
+              {"\u2514"} {leafName(folder)}
+            </span>
           </div>
         ))}
         {folders.length === 0 && (
@@ -127,14 +126,55 @@ export default function Sidebar() {
         />
       )}
 
+      {menu && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          items={[
+            { label: t('context.rename', lang), onClick: () => setRenamingFolder(menu.folder) },
+            { label: t('context.move', lang), onClick: () => setMovingFolder(menu.folder) },
+            { label: t('context.delete', lang), onClick: () => setDeletingFolder(menu.folder), danger: true },
+          ]}
+        />
+      )}
+
       {renamingFolder && (
         <PromptDialog
           message={t('rename.folder', lang)}
-          initialValue={renamingFolder}
+          initialValue={leafName(renamingFolder)}
           confirmLabel={t('rename', lang)}
           onConfirm={handleRenameFolder}
           onCancel={() => setRenamingFolder(null)}
         />
+      )}
+
+      {movingFolder && (
+        <Modal title={t('move.folder', lang)} onClose={() => setMovingFolder(null)}>
+          <div style={moveListStyle}>
+            <button
+              style={moveTargetStyle(colors, false)}
+              onClick={() => {
+                moveFolder(movingFolder, null)
+                setMovingFolder(null)
+              }}
+            >
+              {"\u2514"} {t('move.to.root', lang)}
+            </button>
+            {moveTargets.map((target) => (
+              <button
+                key={target}
+                style={moveTargetStyle(colors, false)}
+                onClick={() => {
+                  moveFolder(movingFolder, target)
+                  setMovingFolder(null)
+                }}
+              >
+                {"\u2514"} {leafName(target)}
+              </button>
+            ))}
+          </div>
+        </Modal>
       )}
 
       {deletingFolder && (
@@ -197,21 +237,8 @@ const folderNameStyle: React.CSSProperties = {
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
+  flex: 1,
 }
-const folderActionsStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 2,
-  flexShrink: 0,
-  marginLeft: 6,
-}
-const folderActionBtn = (c: any) => ({
-  fontSize: 12,
-  color: c.comment,
-  padding: '2px 4px',
-  borderRadius: 4,
-  lineHeight: 1,
-})
 const itemSelectedStyle = (c: any) => ({
   background: c.bgHighlight,
   color: c.blue,
@@ -242,4 +269,24 @@ const settingsBtn = (c: any) => ({
   textAlign: 'left' as const,
   background: c.bgAlt,
   border: `1px solid ${c.border}`,
+})
+const moveListStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+  maxHeight: '50vh',
+  overflowY: 'auto',
+}
+const moveTargetStyle = (c: any, _active: boolean): React.CSSProperties => ({
+  textAlign: 'left' as const,
+  padding: '8px 12px',
+  borderRadius: 6,
+  fontSize: 13,
+  color: c.fg,
+  background: c.bgAlt,
+  border: `1px solid ${c.border}`,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap' as const,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 })

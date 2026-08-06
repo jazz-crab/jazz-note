@@ -7,6 +7,11 @@ import Sidebar from '../components/Sidebar'
 import NoteCard from '../components/NoteCard'
 import ConfirmDialog from '../components/ConfirmDialog'
 import NextDueTimer from '../components/NextDueTimer'
+import ContextMenu from '../components/ContextMenu'
+import Modal from '../components/Modal'
+import PromptDialog from '../components/PromptDialog'
+import DatePicker from '../components/DatePicker'
+import ColorPicker from '../components/ColorPicker'
 import type React from 'react'
 
 interface Props {
@@ -19,11 +24,11 @@ interface NoteItemProps {
   isNew: boolean
   isDeleting: boolean
   onOpen: () => void
-  onDelete: () => void
+  onContextMenu: (e: React.MouseEvent) => void
   onDeleteConfirmed: () => void
 }
 
-function NoteItem({ note, index, isNew, isDeleting, onOpen, onDelete, onDeleteConfirmed }: NoteItemProps) {
+function NoteItem({ note, index, isNew, isDeleting, onOpen, onContextMenu, onDeleteConfirmed }: NoteItemProps) {
   const [entered, setEntered] = useState(false)
 
   useEffect(() => {
@@ -43,7 +48,7 @@ function NoteItem({ note, index, isNew, isDeleting, onOpen, onDelete, onDeleteCo
           if (e.target === e.currentTarget) onDeleteConfirmed()
         }}
       >
-        <NoteCard note={note} isActive={false} onClick={onOpen} onDelete={onDelete} />
+        <NoteCard note={note} isActive={false} onClick={onOpen} onContextMenu={onContextMenu} />
       </div>
     )
   }
@@ -56,10 +61,12 @@ function NoteItem({ note, index, isNew, isDeleting, onOpen, onDelete, onDeleteCo
         transition: 'opacity 0.3s ease, transform 0.3s ease',
       }}
     >
-      <NoteCard note={note} isActive={false} onClick={onOpen} onDelete={onDelete} />
+      <NoteCard note={note} isActive={false} onClick={onOpen} onContextMenu={onContextMenu} />
     </div>
   )
 }
+
+type NoteAction = { note: Note; action: 'rename' | 'date' | 'color' | 'delete' } | null
 
 export default function NoteList({ onSelectNote }: Props) {
   const colors = useColors()
@@ -74,11 +81,14 @@ export default function NoteList({ onSelectNote }: Props) {
   const setSortBy = useNotesStore((s) => s.setSortBy)
   const deleteNote = useNotesStore((s) => s.deleteNote)
   const createNote = useNotesStore((s) => s.createNote)
+  const renameNote = useNotesStore((s) => s.renameNote)
+  const updateNoteMetaByPath = useNotesStore((s) => s.updateNoteMetaByPath)
 
   const [newTitle, setNewTitle] = useState('')
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
   const [createdRelPath, setCreatedRelPath] = useState<string | null>(null)
+  const [menu, setMenu] = useState<{ x: number; y: number; note: Note } | null>(null)
+  const [noteAction, setNoteAction] = useState<NoteAction>(null)
 
   const handleDeleted = (relPath: string) => {
     deleteNote(relPath)
@@ -167,6 +177,12 @@ export default function NoteList({ onSelectNote }: Props) {
     setTimeout(() => setCreatedRelPath(null), 1500)
   }
 
+  const openMenu = (note: Note, x: number, y: number) => {
+    setMenu({ note, x, y })
+  }
+
+  const closeAction = () => setNoteAction(null)
+
   const sortOptions: Array<{ value: SortBy; label: string }> = [
     { value: 'date', label: t('sort.by.date', lang) },
     { value: 'due', label: t('sort.by.due', lang) },
@@ -220,7 +236,10 @@ export default function NoteList({ onSelectNote }: Props) {
               isNew={note.relPath === createdRelPath}
               isDeleting={deleting.has(note.relPath)}
               onOpen={() => onSelectNote(note.relPath)}
-              onDelete={() => setDeleteTarget(note.relPath)}
+              onContextMenu={(e) => {
+                e.preventDefault()
+                openMenu(note, e.clientX, e.clientY)
+              }}
               onDeleteConfirmed={() => handleDeleted(note.relPath)}
             />
           ))}
@@ -242,17 +261,68 @@ export default function NoteList({ onSelectNote }: Props) {
         </div>
       </div>
 
-      {deleteTarget && (
+      {menu && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          items={[
+            { label: t('context.rename', lang), onClick: () => setNoteAction({ note: menu.note, action: 'rename' }) },
+            { label: t('context.change.date', lang), onClick: () => setNoteAction({ note: menu.note, action: 'date' }) },
+            { label: t('context.change.color', lang), onClick: () => setNoteAction({ note: menu.note, action: 'color' }) },
+            { label: t('context.delete', lang), onClick: () => setNoteAction({ note: menu.note, action: 'delete' }), danger: true },
+          ]}
+        />
+      )}
+
+      {noteAction?.action === 'rename' && (
+        <PromptDialog
+          message={t('rename.note', lang)}
+          initialValue={noteAction.note.title}
+          confirmLabel={t('rename', lang)}
+          onConfirm={(v) => {
+            void renameNote(noteAction.note.relPath, v)
+            closeAction()
+          }}
+          onCancel={closeAction}
+        />
+      )}
+
+      {noteAction?.action === 'delete' && (
         <ConfirmDialog
           message={t('delete.confirm', lang)}
           confirmLabel={t('delete', lang)}
           cancelLabel={t('cancel', lang)}
           onConfirm={() => {
-            setDeleteTarget(null)
-            setDeleting((prev) => new Set(prev).add(deleteTarget))
+            setDeleting((prev) => new Set(prev).add(noteAction.note.relPath))
+            closeAction()
           }}
-          onCancel={() => setDeleteTarget(null)}
+          onCancel={closeAction}
         />
+      )}
+
+      {noteAction?.action === 'date' && (
+        <Modal onClose={closeAction}>
+          <DatePicker
+            date={noteAction.note.meta.due || ''}
+            onDateChange={(d) => {
+              void updateNoteMetaByPath(noteAction.note.relPath, { due: d || undefined })
+            }}
+            onDone={closeAction}
+          />
+        </Modal>
+      )}
+
+      {noteAction?.action === 'color' && (
+        <Modal onClose={closeAction}>
+          <ColorPicker
+            value={noteAction.note.meta.color || ''}
+            onChange={(c) => {
+              void updateNoteMetaByPath(noteAction.note.relPath, { color: c || undefined })
+              closeAction()
+            }}
+          />
+        </Modal>
       )}
     </div>
   )

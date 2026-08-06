@@ -3,6 +3,8 @@ import type { NoteMeta, NoteData } from '../utils/frontmatter'
 import { parseNote, serializeNote } from '../utils/frontmatter'
 import { useSettingsStore } from './settings'
 import { debounce } from '../utils/debounce'
+import { replaceFirstHeading } from '../utils/note'
+import { parentOf, moveFolderPath } from '../utils/folder'
 
 const ID_DIGITS = 5
 const ID_STORAGE_KEY = 'jazz-note:next-id'
@@ -60,11 +62,14 @@ interface NotesState {
   createNote: (title: string, onCreated?: (relPath: string) => void) => Promise<string>
   deleteNote: (relPath: string) => Promise<void>
   handleExternalChange: (relPath: string) => void
+  renameNote: (relPath: string, title: string) => Promise<void>
+  updateNoteMetaByPath: (relPath: string, patch: Partial<NoteMeta>) => Promise<void>
   setSidebarSelection: (sel: SidebarSelection) => void
   setSearchQuery: (q: string) => void
   setSortBy: (s: SortBy) => void
   createFolder: (name: string) => Promise<void>
   renameFolder: (folder: string, newName: string) => Promise<void>
+  moveFolder: (folder: string, dest: string | null) => Promise<void>
   deleteFolder: (folder: string) => Promise<void>
 }
 
@@ -222,6 +227,26 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     void debouncedReload()
   },
 
+  renameNote: async (relPath: string, title: string) => {
+    const { notesPath, notes } = get()
+    const note = notes.find((n) => n.relPath === relPath)
+    const finalTitle = title.trim()
+    if (!note || !finalTitle || finalTitle === note.title) return
+    const meta = { ...note.meta, title: finalTitle }
+    const body = replaceFirstHeading(note.body, finalTitle)
+    await window.jazz.writeFile(relPath, serializeNote(meta, body), notesPath)
+    await get().loadNotes()
+  },
+
+  updateNoteMetaByPath: async (relPath: string, patch: Partial<NoteMeta>) => {
+    const { notesPath, notes } = get()
+    const note = notes.find((n) => n.relPath === relPath)
+    if (!note) return
+    const meta = { ...note.meta, ...patch }
+    await window.jazz.writeFile(relPath, serializeNote(meta, note.body), notesPath)
+    await get().loadNotes()
+  },
+
   deleteNote: async (relPath: string) => {
     const { notesPath } = get()
     await window.jazz.deleteFile(relPath, notesPath)
@@ -236,20 +261,40 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   setSortBy: (s) => set({ sortBy: s }),
 
   createFolder: async (name: string) => {
-    const { notesPath } = get()
-    await window.jazz.createDir(name, notesPath)
+    const n = name.trim().replace(/[/\\]/g, '')
+    if (!n) return
+    const { notesPath, sidebarSelection } = get()
+    const folder = sidebarSelection.type === 'folder' ? sidebarSelection.path : ''
+    const rel = folder ? `${folder}/${n}` : n
+    await window.jazz.createDir(rel, notesPath)
     await get().loadNotes()
+    set({ sidebarSelection: { type: 'folder', path: rel } })
   },
 
   renameFolder: async (folder: string, newName: string) => {
     const name = newName.trim().replace(/[/\\]/g, '')
-    if (!name || name === folder) return
+    if (!name) return
+    const parent = parentOf(folder)
+    const newPath = parent ? `${parent}/${name}` : name
+    if (newPath === folder) return
     const { notesPath } = get()
-    await window.jazz.rename(folder, name, notesPath)
+    await window.jazz.rename(folder, newPath, notesPath)
     await get().loadNotes()
     const sel = get().sidebarSelection
     if (sel.type === 'folder' && sel.path === folder) {
-      set({ sidebarSelection: { type: 'folder', path: name } })
+      set({ sidebarSelection: { type: 'folder', path: newPath } })
+    }
+  },
+
+  moveFolder: async (folder: string, dest: string | null) => {
+    const { notesPath } = get()
+    const newPath = moveFolderPath(folder, dest)
+    if (newPath === folder) return
+    await window.jazz.rename(folder, newPath, notesPath)
+    await get().loadNotes()
+    const sel = get().sidebarSelection
+    if (sel.type === 'folder' && sel.path === folder) {
+      set({ sidebarSelection: { type: 'folder', path: newPath } })
     }
   },
 
