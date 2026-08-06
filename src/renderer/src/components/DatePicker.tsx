@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useColors } from '../theme'
+import { useSettingsStore } from '../stores/settings'
+import { t, weekdays, monthName, type Lang } from '../utils/i18n'
 import type React from 'react'
 
 interface Props {
@@ -9,8 +11,6 @@ interface Props {
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
-const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
-const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 function toISO(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
@@ -37,6 +37,9 @@ function parseManual(text: string): Date | null {
 
 export default function DatePicker({ date, onDateChange, onDone }: Props) {
   const colors = useColors()
+  const lang = useSettingsStore((s) => s.lang)
+  const MONTHS = useMemo(() => Array.from({ length: 12 }, (_, i) => monthName(2000, i, lang)), [lang])
+  const WEEKDAYS = useMemo(() => weekdays(lang), [lang])
 
   const initial = useMemo(() => {
     if (!date) return new Date()
@@ -148,7 +151,7 @@ export default function DatePicker({ date, onDateChange, onDone }: Props) {
       </div>
 
       <div style={timeRowStyle}>
-        <span style={timeLabelStyle(colors)}>Время</span>
+        <span style={timeLabelStyle(colors)}>{t('time', lang)}</span>
         <select style={timeSelStyle(colors)} value={pending.getHours()} onChange={(e) => setTime(parseInt(e.target.value, 10), pending.getMinutes())}>
           {Array.from({ length: 24 }, (_, h) => (
             <option key={h} value={h}>{pad(h)}</option>
@@ -172,19 +175,19 @@ export default function DatePicker({ date, onDateChange, onDone }: Props) {
               setManualError(false)
             }
           }}
-          placeholder="ДД.ММ.ГГГГ ЧЧ:ММ"
+          placeholder={t('manual.placeholder', lang)}
         />
       </div>
-      {manualError && <div style={errorStyle(colors)}>Неверный формат. Пример: 05.08.2026 14:30</div>}
+      {manualError && <div style={errorStyle(colors)}>{t('date.invalid', lang)}</div>}
 
       <div style={footerStyle}>
         <div style={quickRowStyle}>
-          <button style={quickBtnStyle(colors)} onClick={() => { const n = new Date(pending); n.setDate(pending.getDate() + 0); setPending(n); setManual(formatManual(n)); }}>Сегодня</button>
-          <button style={quickBtnStyle(colors)} onClick={() => { const n = new Date(pending.getFullYear(), pending.getMonth(), pending.getDate() + 1, pending.getHours(), pending.getMinutes()); setPending(n); setManual(formatManual(n)); }}>Завтра</button>
-          <button style={quickBtnStyle(colors)} onClick={() => { const n = new Date(pending.getFullYear(), pending.getMonth(), pending.getDate() + 7, pending.getHours(), pending.getMinutes()); setPending(n); setManual(formatManual(n)); }}>Через неделю</button>
-          {date && <button style={clearBtnStyle(colors)} onClick={clear}>Очистить</button>}
+          <button style={quickBtnStyle(colors)} onClick={() => { const n = new Date(pending); n.setDate(pending.getDate() + 0); setPending(n); setManual(formatManual(n)); }}>{t('today', lang)}</button>
+          <button style={quickBtnStyle(colors)} onClick={() => { const n = new Date(pending.getFullYear(), pending.getMonth(), pending.getDate() + 1, pending.getHours(), pending.getMinutes()); setPending(n); setManual(formatManual(n)); }}>{t('tomorrow', lang)}</button>
+          <button style={quickBtnStyle(colors)} onClick={() => { const n = new Date(pending.getFullYear(), pending.getMonth(), pending.getDate() + 7, pending.getHours(), pending.getMinutes()); setPending(n); setManual(formatManual(n)); }}>{t('in.week', lang)}</button>
+          {date && <button style={clearBtnStyle(colors)} onClick={clear}>{t('clear', lang)}</button>}
         </div>
-        <button style={doneBtnStyle(colors)} onClick={commit}>Готово</button>
+        <button style={doneBtnStyle(colors)} onClick={commit}>{t('done', lang)}</button>
       </div>
     </div>
   )

@@ -2,25 +2,27 @@ import { useState } from 'react'
 import { useNotesStore, type SidebarSelection } from '../stores/notes'
 import { useSettingsStore } from '../stores/settings'
 import { useColors } from '../theme'
+import { t } from '../utils/i18n'
 import PromptDialog from './PromptDialog'
-
-const filterItems: Array<{ type: SidebarSelection; label: string }> = [
-  { type: { type: 'all' }, label: 'Все заметки' },
-  { type: { type: 'today' }, label: 'Сегодня' },
-  { type: { type: 'tomorrow' }, label: 'Завтра' },
-  { type: { type: 'week' }, label: 'Неделя' },
-  { type: { type: 'later' }, label: 'Позже' },
-  { type: { type: 'nodate' }, label: 'Без срока' },
-]
 
 export default function Sidebar() {
   const colors = useColors()
+  const lang = useSettingsStore((s) => s.lang)
   const folders = useNotesStore((s) => s.folders)
   const sidebarSelection = useNotesStore((s) => s.sidebarSelection)
   const setSidebarSelection = useNotesStore((s) => s.setSidebarSelection)
   const createFolder = useNotesStore((s) => s.createFolder)
   const openSettings = useSettingsStore((s) => s.openSettings)
   const [showNewFolder, setShowNewFolder] = useState(false)
+
+  const filterItems: Array<{ type: SidebarSelection; label: string }> = [
+    { type: { type: 'all' }, label: t('all.notes', lang) },
+    { type: { type: 'today' }, label: t('today', lang) },
+    { type: { type: 'tomorrow' }, label: t('tomorrow', lang) },
+    { type: { type: 'week' }, label: t('week', lang) },
+    { type: { type: 'later' }, label: t('later', lang) },
+    { type: { type: 'nodate' }, label: t('no.date', lang) },
+  ]
 
   const isSelected = (sel: SidebarSelection): boolean => {
     if (sel.type !== sidebarSelection.type) return false
@@ -58,7 +60,7 @@ export default function Sidebar() {
 
       <div style={section}>
         <div style={sectionHeader(colors)}>
-          <span>Папки</span>
+          <span>{t('folders', lang)}</span>
           <button style={addBtn(colors)} onClick={() => setShowNewFolder(true)}>+</button>
         </div>
         {folders.map((folder) => (
@@ -74,21 +76,21 @@ export default function Sidebar() {
           </div>
         ))}
         {folders.length === 0 && (
-          <div style={emptyText(colors)}>Нет папок</div>
+          <div style={emptyText(colors)}>{t('no.folders', lang)}</div>
         )}
       </div>
 
       <div style={{ marginTop: 'auto', padding: '8px 16px' }}>
         <button style={settingsBtn(colors)} onClick={openSettings}>
-          Настройки
+          {t('settings', lang)}
         </button>
       </div>
 
       {showNewFolder && (
         <PromptDialog
-          message="Название папки:"
-          placeholder="Новая папка"
-          confirmLabel="Создать"
+          message={t('folder.name', lang)}
+          placeholder={t('new.folder', lang)}
+          confirmLabel={t('folder.create', lang)}
           onConfirm={handleNewFolder}
           onCancel={() => setShowNewFolder(false)}
         />

@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import type { NoteMeta, NoteData } from '../utils/frontmatter'
 import { parseNote, serializeNote } from '../utils/frontmatter'
+import { useSettingsStore } from './settings'
+import { debounce } from '../utils/debounce'
 
 const ID_DIGITS = 5
 const ID_STORAGE_KEY = 'jazz-note:next-id'
@@ -79,8 +81,10 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
   loadNotes: async () => {
     set({ loading: true })
-    const path = get().notesPath || await window.jazz.getPath()
-    if (!get().notesPath) set({ notesPath: path })
+    const saved = useSettingsStore.getState().notesPath
+    const path = saved || await window.jazz.getPath()
+    if (!saved) useSettingsStore.getState().setNotesPath(path)
+    set({ notesPath: path })
     const entries = await window.jazz.readDirRecursive(path)
     const notes: Note[] = []
     const folders: string[] = []
@@ -212,7 +216,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   handleExternalChange: (relPath: string) => {
     const rel = relPath.replace(/^\/+/, '')
     if (ignoreWatcher.has(rel)) return
-    void get().loadNotes()
+    void debouncedReload()
   },
 
   deleteNote: async (relPath: string) => {
@@ -234,3 +238,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     await get().loadNotes()
   },
 }))
+
+const debouncedReload = debounce(() => {
+  void useNotesStore.getState().loadNotes()
+}, 250)

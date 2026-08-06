@@ -14,13 +14,13 @@ Inspired by [Obsidian](https://obsidian.md): a plain-Markdown vault with inline 
 
 ### Editing
 - **Inline live preview** — `# Heading`, `**bold**`, links and lists render right in the editor (Obsidian-style)
-- **Code fence highlighting** — JS/TS, Python, Go, Rust, Ruby, Swift, Shell, TOML, Dockerfile, HTML, CSS, JSON, YAML, Markdown
+- **Code fence highlighting** — JS/TS, Python, Go, Rust, Ruby, Swift, Shell, TOML, Dockerfile, HTML, CSS, JSON, YAML, Markdown, Java, C/C++, PHP, SQL, XML
 - **Per-note undo/redo** — persistent across restarts (200 steps), with a step-counter toast
 - **Keyboard shortcuts** — `Ctrl/Cmd+S` save, `Ctrl/Cmd+Z` undo, `Shift+Ctrl/Cmd+Z` / `Ctrl/Cmd+Y` redo
 
 ### Notes
-- **Plain Markdown files** in a vault folder (`~/Documents/jazz-notes` by default, auto-created)
-- **Full CRUD** — create, edit, delete notes and folders
+- **Plain Markdown files** in a vault folder (customizable — pick any folder in Settings; defaults to `~/Documents/jazz-notes`, auto-created)
+- **Full CRUD** — create, edit, delete notes and folders (deleting non-empty folders works)
 - **Search** — full-text over title and body, case-insensitive
 - **Filters** — All / Today / Tomorrow / This week / Later / No date
 - **Sorting** — by last updated / created / due date
@@ -35,6 +35,7 @@ Inspired by [Obsidian](https://obsidian.md): a plain-Markdown vault with inline 
 - **3 palettes** — TokyoNight, Everforest, Catppuccin — each with **dark and light** variants
 - **5 Monaspace fonts** (Argon, Neon, Krypton, Xenon, Radon) + Nerd Font icons
 - Per-note **color** and **date** pickers; overdue dates turn red
+- **Bilingual UI** — Русский / English, switchable in Settings and persisted
 
 ## Tech stack
 
@@ -85,9 +86,9 @@ updated: "2026-08-06T00:00:00.000Z"
 Body text…
 ```
 
-Supported frontmatter keys: `title`, `id`, `priority` (0–4), `due`, `color`, `created`, `updated`, `tags`.
+Supported frontmatter keys: `title`, `id`, `priority` (0–4), `due`, `color`, `created`, `updated`, `tags`. The parser handles quoted values with escaping, unquoted scalars, and `---` lines inside the body.
 
-App preferences (palette, theme, language, font) are persisted in `localStorage` under `jazz-settings`.
+App preferences (palette, theme, language, font, notes vault path) are persisted in `localStorage` under `jazz-settings`.
 
 ## Roadmap
 

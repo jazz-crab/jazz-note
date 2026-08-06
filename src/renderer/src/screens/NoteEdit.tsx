@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNotesStore } from '../stores/notes'
+import { useSettingsStore } from '../stores/settings'
 import { useColors, useNoteColors } from '../theme'
 import type { NoteMeta } from '../utils/frontmatter'
 import { mixHex } from '../utils/color'
 import { debounce } from '../utils/debounce'
+import { t, localeOf } from '../utils/i18n'
 import NoteEditor from '../components/NoteEditor'
 import DatePicker from '../components/DatePicker'
 import ColorPicker from '../components/ColorPicker'
@@ -27,6 +29,7 @@ function replaceFirstHeading(body: string, title: string): string {
 
 export default function NoteEdit({ relPath, onBack }: Props) {
   const colors = useColors()
+  const lang = useSettingsStore((s) => s.lang)
   const noteColorMap = useNoteColors()
   const currentNote = useNotesStore((s) => s.currentNote)
   const setCurrentNote = useNotesStore((s) => s.setCurrentNote)
@@ -82,7 +85,7 @@ export default function NoteEdit({ relPath, onBack }: Props) {
       setLastError(null)
       setStatus('success')
     } else {
-      setLastError('Не удалось записать файл')
+      setLastError(t('save.error', lang))
       setStatus('error')
     }
   }
@@ -158,7 +161,7 @@ export default function NoteEdit({ relPath, onBack }: Props) {
         <input
           style={titleInputStyle(colors)}
           value={currentNote.meta.title}
-          placeholder="Без названия"
+          placeholder={t('untitled', lang)}
           onChange={(e) => handleTitleChange(e.target.value)}
         />
         <SaveStatusCircle status={status} lastSavedAt={lastSavedAt} error={lastError} />
@@ -183,7 +186,7 @@ export default function NoteEdit({ relPath, onBack }: Props) {
       <button
         style={tabLeftStyle(colors)}
         onClick={() => setSheet('color')}
-        title="Цвет заметки"
+        title={t('note.color', lang)}
       >
         <span style={{ ...iconStyle, color: noteColor ?? colors.fgDark }}>{'\uDB80\uDCE3'}</span>
       </button>
@@ -191,12 +194,12 @@ export default function NoteEdit({ relPath, onBack }: Props) {
       <button
         style={dateBtnStyle(colors)}
         onClick={() => setSheet('date')}
-        title="Дата и время"
+        title={t('note.date', lang)}
       >
         <span style={{ ...iconStyle, fontSize: 18 }}>{'\uf073'}</span>
         {due && (
           <span style={dateTextStyle(colors, !!isOverdue)}>
-            {due.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {due.toLocaleDateString(localeOf(lang), { day: 'numeric', month: 'short', year: 'numeric' })}
           </span>
         )}
       </button>

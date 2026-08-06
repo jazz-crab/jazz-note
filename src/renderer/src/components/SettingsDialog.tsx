@@ -3,6 +3,8 @@ import { useSettingsStore } from '../stores/settings'
 import { palettes } from '../theme/themes'
 import { fontOptions } from '../utils/fonts'
 import { useColors, useIsDark } from '../theme'
+import { t, langLabels, type Lang } from '../utils/i18n'
+import { useNotesStore } from '../stores/notes'
 
 export default function SettingsDialog() {
   const colors = useColors()
@@ -16,6 +18,16 @@ export default function SettingsDialog() {
   const toggleDark = useSettingsStore((s) => s.toggleDark)
   const setLang = useSettingsStore((s) => s.setLang)
   const setFont = useSettingsStore((s) => s.setFont)
+  const notesPath = useSettingsStore((s) => s.notesPath)
+  const setNotesPath = useSettingsStore((s) => s.setNotesPath)
+  const loadNotes = useNotesStore((s) => s.loadNotes)
+
+  const handlePickFolder = async () => {
+    const dir = await window.jazz.selectDirectory()
+    if (!dir) return
+    setNotesPath(dir)
+    await loadNotes()
+  }
 
   useEffect(() => {
     if (!showSettings) return
@@ -35,7 +47,7 @@ export default function SettingsDialog() {
     <div style={overlayStyle} onClick={closeSettings}>
       <div style={dialogStyle(colors)} onClick={(e) => e.stopPropagation()}>
         <div style={headerStyle}>
-          <span style={titleStyle(colors)}>Настройки</span>
+          <span style={titleStyle(colors)}>{t('settings.title', lang)}</span>
           <button style={closeBtnStyle(colors)} onClick={closeSettings}>
             {'\u2715'}
           </button>
@@ -43,14 +55,14 @@ export default function SettingsDialog() {
 
         <div style={bodyStyle}>
           <div style={toggleGroupStyle}>
-            <span style={toggleLabelStyle(isDark ? 'dark' : 'light')}>Тёмная тема</span>
+            <span style={toggleLabelStyle(isDark ? 'dark' : 'light')}>{t('dark.theme', lang)}</span>
             <button style={switchTrackStyle(isDark)} onClick={toggleDark}>
               <span style={switchThumbStyle(isDark)} />
             </button>
           </div>
 
           <div style={groupStyle}>
-            <label style={labelStyle(colors)}>Цветовая схема</label>
+            <label style={labelStyle(colors)}>{t('color.scheme', lang)}</label>
             <div style={themeListStyle}>
               {palettes.map((p) => (
                 <button
@@ -82,18 +94,34 @@ export default function SettingsDialog() {
           </div>
 
           <div style={groupStyle}>
-            <label style={labelStyle(colors)}>Язык</label>
+            <label style={labelStyle(colors)}>{t('language', lang)}</label>
             <select
               style={selectStyle(colors)}
               value={lang}
-              onChange={(e) => setLang(e.target.value as any)}
+              onChange={(e) => setLang(e.target.value as Lang)}
             >
-              <option value="ru">Русский</option>
+              {(Object.keys(langLabels) as Lang[]).map((l) => (
+                <option key={l} value={l}>
+                  {langLabels[l]}
+                </option>
+              ))}
             </select>
           </div>
 
           <div style={groupStyle}>
-            <label style={labelStyle(colors)}>Шрифт</label>
+            <label style={labelStyle(colors)}>{t('notes.folder', lang)}</label>
+            <div style={folderRowStyle}>
+              <span style={folderPathStyle(colors)}>
+                {notesPath || t('notes.folder.default', lang)}
+              </span>
+              <button style={folderBtnStyle(colors)} onClick={handlePickFolder}>
+                {t('choose.folder', lang)}
+              </button>
+            </div>
+          </div>
+
+          <div style={groupStyle}>
+            <label style={labelStyle(colors)}>{t('font', lang)}</label>
             <div style={fontListStyle}>
               {fontOptions.map((f) => (
                 <button
@@ -286,4 +314,33 @@ const selectStyle = (c: any) => ({
   color: c.fg,
   fontSize: 13,
   cursor: 'pointer',
+})
+const folderRowStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+}
+const folderPathStyle = (c: any) => ({
+  flex: 1,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap' as const,
+  fontSize: 13,
+  color: c.fg,
+  background: c.bg,
+  border: `1px solid ${c.border}`,
+  borderRadius: 6,
+  padding: '8px 12px',
+})
+const folderBtnStyle = (c: any) => ({
+  padding: '8px 12px',
+  background: c.bg,
+  border: `1px solid ${c.blue}`,
+  borderRadius: 6,
+  color: c.blue,
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap' as const,
+  transition: 'background 0.15s',
 })

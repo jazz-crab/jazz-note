@@ -1,5 +1,7 @@
 import type React from 'react'
 import { useColors, useNoteColors } from '../theme'
+import { useSettingsStore } from '../stores/settings'
+import { t } from '../utils/i18n'
 
 interface Props {
   value: string
@@ -8,6 +10,7 @@ interface Props {
 
 export default function ColorPicker({ value, onChange }: Props) {
   const colors = useColors()
+  const lang = useSettingsStore((s) => s.lang)
   const noteColorMap = useNoteColors()
 
   return (
@@ -19,7 +22,7 @@ export default function ColorPicker({ value, onChange }: Props) {
           border: `2px solid ${!value ? colors.blue : colors.border}`,
         }}
         onClick={() => onChange('')}
-        title="Нет цвета"
+        title={t('no.color', lang)}
       />
       {Object.entries(noteColorMap).map(([name, color]) => (
         <button

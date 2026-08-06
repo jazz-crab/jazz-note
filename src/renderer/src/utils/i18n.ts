@@ -1,4 +1,9 @@
-export type Lang = 'ru'
+export type Lang = 'ru' | 'en'
+
+export const langLabels: Record<Lang, string> = {
+  ru: 'Русский',
+  en: 'English',
+}
 
 const ru: Record<string, string> = {
   'app.title': 'JazzNote',
@@ -10,6 +15,7 @@ const ru: Record<string, string> = {
   'no.date': 'Без срока',
   'folders': 'Папки',
   'no.folders': 'Нет папок',
+  'new.folder': 'Новая папка',
   'folder.name': 'Название папки',
   'search.placeholder': 'Поиск заметок...',
   'sort.by.date': 'По дате',
@@ -21,16 +27,19 @@ const ru: Record<string, string> = {
   'new.note': 'Новая заметка',
   'new.note.placeholder': 'Новая заметка...',
   'create': '+',
+  'folder.create': 'Создать',
   'delete.confirm': 'Удалить заметку?',
-  'note.unsaved': 'Не сохранено',
-  'note.saved': 'Сохранено',
-  'not.saved': 'Не сохранено',
-  'saved': 'Сохранено',
+  'delete': 'Удалить',
+  'cancel': 'Отмена',
+  'ok': 'OK',
   'find.in.note': 'Поиск в заметке...',
   'settings': 'Настройки',
   'settings.title': 'Настройки',
   'theme': 'Тема',
+  'dark.theme': 'Тёмная тема',
+  'color.scheme': 'Цветовая схема',
   'language': 'Язык',
+  'font': 'Шрифт',
   'close': 'Закрыть',
   'back': '←',
   'priority.none': 'Нет',
@@ -41,10 +50,120 @@ const ru: Record<string, string> = {
   'no.color': 'Нет цвета',
   'date': 'Дата',
   'type.here': 'Начните печатать...',
+  'exit.confirm': 'Выйти?',
+  'untitled': 'Без названия',
+  'note.color': 'Цвет заметки',
+  'note.date': 'Дата и время',
+  'save.error': 'Не удалось записать файл',
+  'status.idle': 'Нет несохранённых изменений',
+  'status.dirty': 'Есть несохранённые изменения',
+  'status.saving': 'Сохранение...',
+  'status.success': 'Всё сохранено',
+  'status.error': 'Ошибка сохранения',
+  'last.saved': 'Последнее сохранение:',
+  'last.saved.ok': 'Последнее успешное сохранение:',
+  'undo.toast': 'Отмена: ещё {n} {w}',
+  'redo.toast': 'Повтор: ещё {n} {w}',
+  'time': 'Время',
+  'manual.placeholder': 'ДД.ММ.ГГГГ ЧЧ:ММ',
+  'date.invalid': 'Неверный формат. Пример: 05.08.2026 14:30',
+  'in.week': 'Через неделю',
+  'clear': 'Очистить',
+  'done': 'Готово',
+  'notes.folder': 'Папка с заметками',
+  'notes.folder.default': 'По умолчанию',
+  'choose.folder': 'Выбрать папку...',
 }
 
-const strings: Record<Lang, Record<string, string>> = { ru }
+const en: Record<string, string> = {
+  'app.title': 'JazzNote',
+  'all.notes': 'All notes',
+  'today': 'Today',
+  'tomorrow': 'Tomorrow',
+  'week': 'This week',
+  'later': 'Later',
+  'no.date': 'No date',
+  'folders': 'Folders',
+  'no.folders': 'No folders',
+  'new.folder': 'New folder',
+  'folder.name': 'Folder name',
+  'search.placeholder': 'Search notes...',
+  'sort.by.date': 'By date',
+  'sort.by.due': 'By due date',
+  'sort.by.priority': 'By priority',
+  'loading': 'Loading...',
+  'no.notes': 'No notes',
+  'no.results': 'Nothing found',
+  'new.note': 'New note',
+  'new.note.placeholder': 'New note...',
+  'create': '+',
+  'folder.create': 'Create',
+  'delete.confirm': 'Delete note?',
+  'delete': 'Delete',
+  'cancel': 'Cancel',
+  'ok': 'OK',
+  'find.in.note': 'Find in note...',
+  'settings': 'Settings',
+  'settings.title': 'Settings',
+  'theme': 'Theme',
+  'dark.theme': 'Dark theme',
+  'color.scheme': 'Color scheme',
+  'language': 'Language',
+  'font': 'Font',
+  'close': 'Close',
+  'back': '←',
+  'priority.none': 'None',
+  'priority.low': 'Low',
+  'priority.medium': 'Medium',
+  'priority.high': 'High',
+  'priority.critical': 'Critical',
+  'no.color': 'No color',
+  'date': 'Date',
+  'type.here': 'Start typing...',
+  'exit.confirm': 'Exit?',
+  'untitled': 'Untitled',
+  'note.color': 'Note color',
+  'note.date': 'Date & time',
+  'save.error': 'Failed to write file',
+  'status.idle': 'No unsaved changes',
+  'status.dirty': 'Unsaved changes',
+  'status.saving': 'Saving...',
+  'status.success': 'All changes saved',
+  'status.error': 'Save error',
+  'last.saved': 'Last saved:',
+  'last.saved.ok': 'Last successful save:',
+  'undo.toast': 'Undo: {n} {w} left',
+  'redo.toast': 'Redo: {n} {w} left',
+  'time': 'Time',
+  'manual.placeholder': 'DD.MM.YYYY HH:MM',
+  'date.invalid': 'Invalid format. Example: 05.08.2026 14:30',
+  'in.week': 'In a week',
+  'clear': 'Clear',
+  'done': 'Done',
+  'notes.folder': 'Notes folder',
+  'notes.folder.default': 'Default',
+  'choose.folder': 'Choose folder...',
+}
+
+const strings: Record<Lang, Record<string, string>> = { ru, en }
 
 export function t(key: string, lang: Lang = 'ru'): string {
-  return strings[lang]?.[key] ?? key
+  return strings[lang]?.[key] ?? strings.ru[key] ?? key
+}
+
+export function localeOf(lang: Lang): string {
+  return lang === 'ru' ? 'ru-RU' : 'en-US'
+}
+
+export function monthName(year: number, month: number, lang: Lang): string {
+  return new Date(year, month, 1).toLocaleDateString(localeOf(lang), { month: 'long' })
+}
+
+const mondayFirstWeekdays: Record<Lang, string[]> = {
+  ru: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+  en: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
+}
+
+export function weekdays(lang: Lang): string[] {
+  return mondayFirstWeekdays[lang]
 }

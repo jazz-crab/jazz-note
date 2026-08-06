@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useColors } from '../theme'
+import { useSettingsStore } from '../stores/settings'
+import { t, localeOf } from '../utils/i18n'
 
 export type SaveStatus = 'idle' | 'dirty' | 'saving' | 'success' | 'error'
 
@@ -9,12 +11,12 @@ interface Props {
   error?: string | null
 }
 
-const statusText: Record<SaveStatus, string> = {
-  idle: 'Нет несохранённых изменений',
-  dirty: 'Есть несохранённые изменения',
-  saving: 'Сохранение...',
-  success: 'Всё сохранено',
-  error: 'Ошибка сохранения',
+const statusKey: Record<SaveStatus, string> = {
+  idle: 'status.idle',
+  dirty: 'status.dirty',
+  saving: 'status.saving',
+  success: 'status.success',
+  error: 'status.error',
 }
 
 function colorFor(status: SaveStatus, c: any): string {
@@ -23,15 +25,17 @@ function colorFor(status: SaveStatus, c: any): string {
   return c.green
 }
 
-function formatTime(d: Date): string {
-  return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+function formatTime(d: Date, lang: 'ru' | 'en'): string {
+  return d.toLocaleTimeString(localeOf(lang), { hour: '2-digit', minute: '2-digit' })
 }
 
 export default function SaveStatusCircle({ status, lastSavedAt, error }: Props) {
   const colors = useColors()
+  const lang = useSettingsStore((s) => s.lang)
   const [showPopup, setShowPopup] = useState(false)
   const color = colorFor(status, colors)
   const saving = status === 'saving'
+  const statusLabel = t(statusKey[status], lang)
 
   return (
     <div style={containerStyle}>
@@ -42,18 +46,18 @@ export default function SaveStatusCircle({ status, lastSavedAt, error }: Props) 
           animation: saving ? 'pulse 1.6s ease-in-out infinite' : 'none',
         }}
         onClick={() => setShowPopup((v) => !v)}
-        title={statusText[status]}
+        title={statusLabel}
       />
       {showPopup && (
         <div style={popupStyle(colors)} onClick={() => setShowPopup(false)}>
-          <div style={titleStyle(colors)}>{statusText[status]}</div>
+          <div style={titleStyle(colors)}>{statusLabel}</div>
           {status === 'error' && error && (
             <div style={errorStyle(colors)}>{error}</div>
           )}
           <div style={timeStyle(colors)}>
             {status === 'error' && lastSavedAt
-              ? `Последнее успешное сохранение: ${formatTime(lastSavedAt)}`
-              : `Последнее сохранение: ${lastSavedAt ? formatTime(lastSavedAt) : '—'}`}
+              ? `${t('last.saved.ok', lang)} ${formatTime(lastSavedAt, lang)}`
+              : `${t('last.saved', lang)} ${lastSavedAt ? formatTime(lastSavedAt, lang) : '—'}`}
           </div>
         </div>
       )}

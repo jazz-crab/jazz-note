@@ -15,53 +15,85 @@ export interface NoteData {
   raw: string
 }
 
-export function parseNote(raw: string): NoteData {
-  const meta: NoteMeta = { title: '' }
+interface Frontmatter {
+  values: Record<string, string>
+  content: string
+}
 
-  let body = raw
-  if (raw.startsWith('---')) {
-    const end = raw.indexOf('---', 3)
-    if (end !== -1) {
-      const fm = raw.slice(3, end).trim()
-      body = raw.slice(end + 3).trim()
-      for (const line of fm.split('\n')) {
-        const colon = line.indexOf(':')
-        if (colon === -1) continue
-        const key = line.slice(0, colon).trim()
-        let val: any = line.slice(colon + 1).trim()
-        if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1)
-        if (key === 'id') meta.id = val
-        else if (key === 'title') meta.title = val
-        else if (key === 'priority') meta.priority = Number(val) as any
-        else if (key === 'due') meta.due = val
-        else if (key === 'color') meta.color = val
-        else if (key === 'created') meta.created = val
-        else if (key === 'updated') meta.updated = val
-        else if (key === 'tags') {
-          meta.tags = val.replace(/[\[\]]/g, '').split(',').map((t: string) => t.trim()).filter(Boolean)
-        }
+function extractFrontmatter(raw: string): Frontmatter | null {
+  if (!raw.startsWith('---')) return null
+  const lines = raw.split('\n')
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trimEnd() === '---') {
+      const values: Record<string, string> = {}
+      for (const line of lines.slice(1, i)) {
+        const match = line.match(/^([A-Za-z0-9_-]+)\s*:\s*(.*)$/)
+        if (!match) continue
+        values[match[1]] = match[2].trim()
+      }
+      return {
+        values,
+        content: lines.slice(i + 1).join('\n').trim(),
       }
     }
   }
+  return null
+}
+
+function unquote(v: string): string {
+  if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
+    return v.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+  }
+  return v
+}
+
+function quote(v: string): string {
+  return `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+}
+
+function parseTags(v: string): string[] {
+  return v.replace(/[\[\]]/g, '').split(',').map((t) => t.trim()).filter(Boolean)
+}
+
+export function parseNote(raw: string): NoteData {
+  const meta: NoteMeta = { title: '' }
+
+  const fm = extractFrontmatter(raw)
+  if (fm) {
+    const v = fm.values
+    if (v.title !== undefined) meta.title = unquote(v.title)
+    if (v.id !== undefined) meta.id = unquote(v.id)
+    if (v.priority !== undefined) {
+      const p = Number(v.priority)
+      if (Number.isInteger(p) && p >= 0 && p <= 4) meta.priority = p as NoteMeta['priority']
+    }
+    if (v.due !== undefined) meta.due = unquote(v.due)
+    if (v.color !== undefined) meta.color = unquote(v.color)
+    if (v.created !== undefined) meta.created = unquote(v.created)
+    if (v.updated !== undefined) meta.updated = unquote(v.updated)
+    if (v.tags !== undefined) meta.tags = parseTags(v.tags)
+  }
+
+  const content = fm ? fm.content : raw
 
   if (!meta.title) {
-    const firstLine = body.split('\n')[0] || ''
+    const firstLine = content.split('\n')[0] || ''
     meta.title = firstLine.replace(/^#\s*/, '').trim() || 'Untitled'
   }
 
-  return { meta, content: body, raw }
+  return { meta, content, raw }
 }
 
 export function serializeNote(meta: NoteMeta, content: string): string {
   const now = new Date().toISOString()
   const lines = ['---']
-  lines.push(`title: "${meta.title}"`)
-  if (meta.id) lines.push(`id: "${meta.id}"`)
+  lines.push(`title: ${quote(meta.title)}`)
+  if (meta.id) lines.push(`id: ${quote(meta.id)}`)
   if (meta.priority) lines.push(`priority: ${meta.priority}`)
-  if (meta.due) lines.push(`due: "${meta.due}"`)
-  if (meta.color) lines.push(`color: "${meta.color}"`)
-  if (meta.created) lines.push(`created: "${meta.created}"`)
-  lines.push(`updated: "${now}"`)
+  if (meta.due) lines.push(`due: ${quote(meta.due)}`)
+  if (meta.color) lines.push(`color: ${quote(meta.color)}`)
+  if (meta.created) lines.push(`created: ${quote(meta.created)}`)
+  lines.push(`updated: ${quote(now)}`)
   if (meta.tags?.length) lines.push(`tags: [${meta.tags.join(', ')}]`)
   lines.push('---')
   lines.push('')

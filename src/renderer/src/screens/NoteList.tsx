@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNotesStore, type SortBy, type Note } from '../stores/notes'
 import { useColors } from '../theme'
+import { t } from '../utils/i18n'
+import { useSettingsStore } from '../stores/settings'
 import Sidebar from '../components/Sidebar'
 import NoteCard from '../components/NoteCard'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -60,6 +62,7 @@ function NoteItem({ note, index, isNew, isDeleting, onOpen, onDelete, onDeleteCo
 
 export default function NoteList({ onSelectNote }: Props) {
   const colors = useColors()
+  const lang = useSettingsStore((s) => s.lang)
   const notes = useNotesStore((s) => s.notes)
   const loading = useNotesStore((s) => s.loading)
   const sidebarSelection = useNotesStore((s) => s.sidebarSelection)
@@ -164,8 +167,8 @@ export default function NoteList({ onSelectNote }: Props) {
   }
 
   const sortOptions: Array<{ value: SortBy; label: string }> = [
-    { value: 'date', label: 'По дате' },
-    { value: 'due', label: 'По сроку' },
+    { value: 'date', label: t('sort.by.date', lang) },
+    { value: 'due', label: t('sort.by.due', lang) },
   ]
 
   return (
@@ -178,7 +181,7 @@ export default function NoteList({ onSelectNote }: Props) {
               style={searchStyle(colors)}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Поиск заметок..."
+              placeholder={t('search.placeholder', lang)}
             />
             {searchQuery && (
               <button style={clearBtnStyle(colors)} onClick={() => setSearchQuery('')}>×</button>
@@ -201,10 +204,10 @@ export default function NoteList({ onSelectNote }: Props) {
         </div>
 
         <div style={listStyle}>
-          {loading && <div style={loadingStyle(colors)}>Загрузка...</div>}
+          {loading && <div style={loadingStyle(colors)}>{t('loading', lang)}</div>}
           {!loading && filtered.length === 0 && (
             <div style={emptyStyle(colors)}>
-              {searchQuery ? 'Ничего не найдено' : 'Нет заметок'}
+              {searchQuery ? t('no.results', lang) : t('no.notes', lang)}
             </div>
           )}
           {filtered.map((note, i) => (
@@ -227,21 +230,21 @@ export default function NoteList({ onSelectNote }: Props) {
               style={newNoteInputStyle(colors)}
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Новая заметка..."
+              placeholder={t('new.note.placeholder', lang)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleCreate()
               }}
             />
-            <button style={createBtnStyle(colors)} onClick={handleCreate}>+</button>
+            <button style={createBtnStyle(colors)} onClick={handleCreate}>{t('create', lang)}</button>
           </div>
         </div>
       </div>
 
       {deleteTarget && (
         <ConfirmDialog
-          message="Удалить заметку?"
-          confirmLabel="Удалить"
-          cancelLabel="Отмена"
+          message={t('delete.confirm', lang)}
+          confirmLabel={t('delete', lang)}
+          cancelLabel={t('cancel', lang)}
           onConfirm={() => {
             setDeleteTarget(null)
             setDeleting((prev) => new Set(prev).add(deleteTarget))

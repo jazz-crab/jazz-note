@@ -10,6 +10,7 @@ interface SettingsState {
   isDark: boolean
   lang: Lang
   font: FontId
+  notesPath: string
   toggleSettings: () => void
   openSettings: () => void
   closeSettings: () => void
@@ -17,6 +18,7 @@ interface SettingsState {
   toggleDark: () => void
   setLang: (lang: Lang) => void
   setFont: (font: FontId) => void
+  setNotesPath: (path: string) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -27,6 +29,7 @@ export const useSettingsStore = create<SettingsState>()(
       isDark: true,
       lang: 'ru',
       font: 'neon',
+      notesPath: '',
       toggleSettings: () => set((s) => ({ showSettings: !s.showSettings })),
       openSettings: () => set({ showSettings: true }),
       closeSettings: () => set({ showSettings: false }),
@@ -34,10 +37,11 @@ export const useSettingsStore = create<SettingsState>()(
       toggleDark: () => set((s) => ({ isDark: !s.isDark })),
       setLang: (lang) => set({ lang }),
       setFont: (font) => set({ font }),
+      setNotesPath: (notesPath) => set({ notesPath }),
     }),
     {
       name: 'jazz-settings',
-      partialize: (s) => ({ palette: s.palette, isDark: s.isDark, lang: s.lang, font: s.font }),
+      partialize: (s) => ({ palette: s.palette, isDark: s.isDark, lang: s.lang, font: s.font, notesPath: s.notesPath }),
     }
   )
 )

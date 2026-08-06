@@ -5,10 +5,13 @@ import { keymap, EditorView } from '@codemirror/view'
 import { ATOMIC_CODE_LANGUAGES } from '@atomic-editor/editor/code-languages'
 import type { AtomicCodeMirrorEditorHandle } from '@atomic-editor/editor'
 import { historyStore, useHistoryToast } from '../stores/history'
+import { useSettingsStore } from '../stores/settings'
+import { t, type Lang } from '../utils/i18n'
 
 const COALESCE_MS = 800
 
-function stepsWord(n: number): string {
+function stepsWord(n: number, lang: Lang): string {
+  if (lang === 'en') return n === 1 ? 'step' : 'steps'
   const mod10 = n % 10
   const mod100 = n % 100
   if (mod10 === 1 && mod100 !== 11) return 'шаг'
@@ -33,6 +36,7 @@ export default function NoteEditor({ documentId, value, onChange, onSave }: Prop
   const restoringRef = useRef(false)
   const lastStepAtRef = useRef(0)
   const showToast = useHistoryToast((s) => s.showToast)
+  const lang = useSettingsStore((s) => s.lang)
 
   const getView = useCallback(() => {
     const contentDOM = handleRef.current?.getContentDOM()
@@ -65,12 +69,12 @@ export default function NoteEditor({ documentId, value, onChange, onSave }: Prop
     const res = historyStore.undo(documentId, current)
     if (res) {
       replaceDoc(res.body)
-      showToast(`Отмена: ещё ${res.remainingUndo} ${stepsWord(res.remainingUndo)}`)
+      showToast(t('undo.toast', lang).replace('{n}', String(res.remainingUndo)).replace('{w}', stepsWord(res.remainingUndo, lang)))
     } else {
-      showToast(`Отмена: ещё 0 ${stepsWord(0)}`)
+      showToast(t('undo.toast', lang).replace('{n}', '0').replace('{w}', stepsWord(0, lang)))
     }
     return true
-  }, [getView, replaceDoc, showToast, documentId])
+  }, [getView, replaceDoc, showToast, documentId, lang])
 
   const doRedo = useCallback(() => {
     const view = getView()
@@ -79,12 +83,12 @@ export default function NoteEditor({ documentId, value, onChange, onSave }: Prop
     const res = historyStore.redo(documentId, current)
     if (res) {
       replaceDoc(res.body)
-      showToast(`Повтор: ещё ${res.remainingRedo} ${stepsWord(res.remainingRedo)}`)
+      showToast(t('redo.toast', lang).replace('{n}', String(res.remainingRedo)).replace('{w}', stepsWord(res.remainingRedo, lang)))
     } else {
-      showToast(`Повтор: ещё 0 ${stepsWord(0)}`)
+      showToast(t('redo.toast', lang).replace('{n}', '0').replace('{w}', stepsWord(0, lang)))
     }
     return true
-  }, [getView, replaceDoc, showToast, documentId])
+  }, [getView, replaceDoc, showToast, documentId, lang])
 
   useEffect(() => {
     handleRef.current?.focus()

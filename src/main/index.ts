@@ -1,7 +1,7 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
 import { join } from 'path'
-import { readdir, readFile, writeFile, unlink, mkdir, stat } from 'fs/promises'
-import { existsSync, writeFileSync } from 'fs'
+import { readdir, readFile, writeFile, unlink, mkdir, rm } from 'fs/promises'
+import { existsSync } from 'fs'
 import { watch } from 'chokidar'
 
 let mainWindow: BrowserWindow | null = null
@@ -67,26 +67,6 @@ function registerIpc() {
     return join(p, 'jazz-notes')
   })
 
-  ipcMain.handle('notes:readDir', async (_event, dirPath?: string) => {
-    const notesPath = dirPath || getDefaultNotesPath()
-    await ensureNotesDir(notesPath)
-    startWatching(notesPath)
-
-    const entries = await readdir(notesPath, { withFileTypes: true })
-    const notes: Array<{ path: string; isDir: boolean; mtimeMs?: number }> = []
-    for (const entry of entries) {
-      if (entry.isFile() && entry.name.endsWith('.md')) {
-        const fullPath = join(notesPath, entry.name)
-        const s = await stat(fullPath)
-        notes.push({ path: entry.name, isDir: false, mtimeMs: s.mtimeMs })
-      } else if (entry.isDirectory() && !entry.name.startsWith('.')) {
-        notes.push({ path: entry.name, isDir: true })
-      }
-    }
-    notes.sort((a, b) => (a.mtimeMs || 0) - (b.mtimeMs || 0))
-    return notes
-  })
-
   ipcMain.handle('notes:readFile', async (_event, relPath: string, dirPath?: string) => {
     const notesPath = dirPath || getDefaultNotesPath()
     const fullPath = join(notesPath, relPath)
@@ -100,17 +80,6 @@ function registerIpc() {
     await ensureNotesDir(notesPath)
     await writeFile(fullPath, content, 'utf-8')
     return true
-  })
-
-  ipcMain.on('notes:writeFileSync', (event, relPath: string, content: string, dirPath?: string) => {
-    const notesPath = dirPath || getDefaultNotesPath()
-    const fullPath = join(notesPath, relPath)
-    if (!existsSync(notesPath)) {
-      event.returnValue = false
-      return
-    }
-    writeFileSync(fullPath, content, 'utf-8')
-    event.returnValue = true
   })
 
   ipcMain.handle('notes:deleteFile', async (_event, relPath: string, dirPath?: string) => {
@@ -138,7 +107,7 @@ function registerIpc() {
   ipcMain.handle('notes:deleteDir', async (_event, relPath: string, dirPath?: string) => {
     const notesPath = dirPath || getDefaultNotesPath()
     const fullPath = join(notesPath, relPath)
-    await unlink(fullPath)
+    await rm(fullPath, { recursive: true, force: true })
     return true
   })
 
@@ -186,10 +155,6 @@ function registerIpc() {
     })
     if (result.canceled) return null
     return result.filePaths[0]
-  })
-
-  ipcMain.handle('shell:openPath', async (_event, filePath: string) => {
-    await shell.openPath(filePath)
   })
 }
 

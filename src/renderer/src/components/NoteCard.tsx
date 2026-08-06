@@ -1,6 +1,8 @@
 import type { Note } from '../stores/notes'
 import { useColors, useNoteColors } from '../theme'
 import { mixHex } from '../utils/color'
+import { useSettingsStore } from '../stores/settings'
+import { localeOf, t } from '../utils/i18n'
 import type React from 'react'
 
 interface Props {
@@ -12,6 +14,7 @@ interface Props {
 
 export default function NoteCard({ note, isActive, onClick, onDelete }: Props) {
   const colors = useColors()
+  const lang = useSettingsStore((s) => s.lang)
   const noteColorMap = useNoteColors()
   const noteColor = note.meta.color ? noteColorMap[note.meta.color] : null
   const due = note.meta.due ? new Date(note.meta.due) : null
@@ -33,19 +36,19 @@ export default function NoteCard({ note, isActive, onClick, onDelete }: Props) {
           {noteColor && (
             <span style={{ ...colorDot(noteColor) }} />
           )}
-          <span style={titleStyle(colors)}>{note.title || 'Untitled'}</span>
+          <span style={titleStyle(colors)}>{note.title || t('untitled', lang)}</span>
           <button style={deleteBtn(colors)} onClick={(e) => { e.stopPropagation(); onDelete() }}>×</button>
         </div>
         {preview && <div style={previewStyle(colors)}>{preview}</div>}
         <div style={styles.footer}>
           {due && (
             <span style={{ ...dueStyle(colors), ...(isOverdue ? overdueStyle(colors) : {}) }}>
-              {due.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+              {due.toLocaleDateString(localeOf(lang), { day: 'numeric', month: 'short' })}
             </span>
           )}
           {note.meta.updated && (
             <span style={updatedStyle(colors)}>
-              {new Date(note.meta.updated).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+              {new Date(note.meta.updated).toLocaleDateString(localeOf(lang), { day: 'numeric', month: 'short' })}
             </span>
           )}
         </div>

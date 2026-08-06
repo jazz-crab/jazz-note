@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useColors } from '../theme'
+import { t } from '../utils/i18n'
+import { useSettingsStore } from '../stores/settings'
 
 interface Props {
   message: string
@@ -9,9 +11,12 @@ interface Props {
   onCancel: () => void
 }
 
-export default function ConfirmDialog({ message, confirmLabel = 'OK', cancelLabel = 'Отмена', onConfirm, onCancel }: Props) {
+export default function ConfirmDialog({ message, confirmLabel, cancelLabel, onConfirm, onCancel }: Props) {
   const colors = useColors()
+  const lang = useSettingsStore((s) => s.lang)
   const [closing, setClosing] = useState(false)
+  const resolvedConfirm = confirmLabel ?? t('ok', lang)
+  const resolvedCancel = cancelLabel ?? t('cancel', lang)
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -39,10 +44,10 @@ export default function ConfirmDialog({ message, confirmLabel = 'OK', cancelLabe
         <div style={messageStyle(colors)}>{message}</div>
         <div style={actionsStyle}>
           <button style={cancelBtnStyle(colors)} onClick={requestClose(onCancel)}>
-            {cancelLabel}
+            {resolvedCancel}
           </button>
           <button style={confirmBtnStyle(colors)} onClick={requestClose(onConfirm)}>
-            {confirmLabel}
+            {resolvedConfirm}
           </button>
         </div>
       </div>
